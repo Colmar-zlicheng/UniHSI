@@ -754,7 +754,7 @@ class UniHSI_PartNet_Train(humanoid_amp_task.HumanoidAMPTask):
 # @torch.jit.script
 def compute_strike_observations(root_states, tar_pos, joint_pos_buffer, pcd_buffer, tar_rot, tar_vel, tar_ang_vel, contact_type, contact_valid, contact_direction, 
                                 human_in_mesh, origin_root_pos, local_scale, height_map_pcd, mesh_pos, tar_dir):
-    # type: (Tensor, Tensor) -> Tensor
+    ## type: (Tensor, Tensor) -> Tensor
     root_pos = root_states[:, 0:3]
     root_rot = root_states[:, 3:7]
 
@@ -803,7 +803,7 @@ def compute_strike_observations(root_states, tar_pos, joint_pos_buffer, pcd_buff
 
 def compute_contact_reward(target, root_state, pcd_buffer, joint_pos_buffer, 
                            prev_root_pos, dt, contact_type, contact_valid, contact_direction):
-    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, float, float) -> Tensor
+    ## type: (Tensor, Tensor, Tensor, Tensor, Tensor, float, float) -> Tensor
     dist_threshold = 0.2
 
     pos_err_scale = 0.5
@@ -909,7 +909,7 @@ def compute_contact_reward(target, root_state, pcd_buffer, joint_pos_buffer,
 # @torch.jit.script
 def compute_humanoid_reset(reset_buf, progress_buf, contact_buf, contact_body_ids, rigid_body_pos, strike_body_ids, max_episode_length,
                            enable_early_termination, termination_heights, _rigid_body_vel, still_buf, fulfill, big_force):
-    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, float, bool, Tensor) -> Tuple[Tensor, Tensor]
+    ## type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, float, bool, Tensor) -> Tuple[Tensor, Tensor]
     contact_force_threshold = 1.0
     
     terminated = torch.zeros_like(reset_buf)

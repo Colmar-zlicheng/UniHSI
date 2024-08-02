@@ -129,6 +129,9 @@ class Humanoid(BaseTask):
         
         if self.viewer != None:
             self._init_camera()
+
+        self.save_path = './tmp/unishi_tmp.pkl'
+        self.save_dict = {}
             
         return
 

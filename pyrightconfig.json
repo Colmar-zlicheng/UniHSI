@@ -1,0 +1,13 @@
+{
+    "exclude": [
+        "**/__pycache__",
+        "**/data/**",
+        "**/assets/**",
+        "**/checkpoint/**",
+        "**/checkpoints/**",
+        "**/motion_clips/**",
+        "**/output/**",
+        "**/wandb/**",
+        "**/tmp/**",
+    ]
+}

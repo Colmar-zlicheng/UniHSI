@@ -26,7 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import wandb
+# import wandb
 
 import os
 
@@ -206,15 +206,17 @@ def main():
     # Create default directories for weights and statistics
     cfg_train['params']['config']['train_dir'] = args.output_path
     
-    wandb.init(project="ase", entity="xizaoqu",name=args.wandb_name)
-    wandb.config.cfg_env = args.cfg_env
-    wandb.config.cfg_train = args.cfg_train
-    wandb.config.checkpoint = args.checkpoint
-    wandb.config.motion_file = args.motion_file
-    wandb.config.num_envs = args.num_envs
-    wandb.config.wandb_name = args.wandb_name
-    wandb.config.output_path = args.output_path
-    wandb.config.task = args.task
+    # wandb.init(project="ase", 
+    # # entity="xizaoqu",
+    # name=args.wandb_name)
+    # wandb.config.cfg_env = args.cfg_env
+    # wandb.config.cfg_train = args.cfg_train
+    # wandb.config.checkpoint = args.checkpoint
+    # wandb.config.motion_file = args.motion_file
+    # wandb.config.num_envs = args.num_envs
+    # wandb.config.wandb_name = args.wandb_name
+    # wandb.config.output_path = args.output_path
+    # wandb.config.task = args.task
 
     vargs = vars(args)
 

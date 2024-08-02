@@ -1,1 +1,7 @@
 *.pyc
+
+data
+wandb
+output
+checkpoints
+tmp

@@ -1,0 +1,121 @@
+{
+    "0000": {
+        "obj": {
+            "000": {
+                "id": "11749",
+                "rotate": [
+                    [
+                        1.5707963267948966,
+                        0,
+                        0
+                    ],
+                    [
+                        0,
+                        0,
+                        -1.5707963267948966
+                    ]
+                ],
+                "scale": 3,
+                "transfer": [
+                    2.9414459228515626,
+                    -2,
+                    0
+                ],
+                "stand_point": [
+                    [
+                        3.536765909194946,
+                        -0.8327990293502807,
+                        0.86
+                    ],
+                    [
+                        3.536765909194946,
+                        -0.8327990293502807,
+                        0.86
+                    ],
+                    [
+                        3.536765909194946,
+                        -0.8327990293502807,
+                        0.86
+                    ],
+                    [
+                        3.536765909194946,
+                        -0.8327990293502807,
+                        0.86
+                    ]
+                ],
+                "name": "bed"
+            }
+        },
+        "contact_pairs": [
+            [
+                [
+                    "bed000",
+                    "none",
+                    "none",
+                    "none",
+                    "none"
+                ]
+            ],
+            [
+                [
+                    "bed000",
+                    "mattress16",
+                    "pelvis",
+                    "contact",
+                    "up"
+                ],
+                [
+                    "bed000",
+                    "floor",
+                    "left_foot",
+                    "contact",
+                    "none"
+                ],
+                [
+                    "bed000",
+                    "floor",
+                    "right_foot",
+                    "contact",
+                    "none"
+                ],
+                [
+                    "bed000",
+                    "mattress16",
+                    "head",
+                    "not contact",
+                    "none"
+                ]
+            ],
+            [
+                [
+                    "bed000",
+                    "mattress16",
+                    "pelvis",
+                    "contact",
+                    "up"
+                ],
+                [
+                    "bed000",
+                    "mattress16",
+                    "left_foot",
+                    "contact",
+                    "none"
+                ],
+                [
+                    "bed000",
+                    "mattress16",
+                    "right_foot",
+                    "contact",
+                    "none"
+                ],
+                [
+                    "bed000",
+                    "mattress16",
+                    "head",
+                    "contact",
+                    "none"
+                ]
+            ]
+        ]
+    }
+}

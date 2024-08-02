@@ -13,11 +13,18 @@ def copy_file(source_path, destination_path):
 
 
 for obj_id in obj_list:
+    obj_id=f"scene{obj_id}"
     source_file =  "scannet_origin/scans/"+obj_id+"/"+obj_id+"_vh_clean_2.ply"
     target_file = "scannet/"+obj_id+"_vh_clean_2.ply"
+
+    copy_file(source_file, target_file)
+
     source_file =  "scannet_origin/scans/"+obj_id+"/"+obj_id+"_vh_clean.aggregation.json"
     target_file = "scannet/"+obj_id+"_vh_clean.aggregation.json"
-    source_file =  "scannet_origin/scans/"+obj_id+"/"+obj_id+"_vh_clean_2.0.010000.segs"
-    target_file = "scannet/"+obj_id+"_vh_clean_2.0.010000.segs"
+
+    copy_file(source_file, target_file)
+
+    source_file =  "scannet_origin/scans/"+obj_id+"/"+obj_id+"_vh_clean_2.0.010000.segs.json"
+    target_file = "scannet/"+obj_id+"_vh_clean_2.0.010000.segs.json"
 
     copy_file(source_file, target_file)
