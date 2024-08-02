@@ -619,8 +619,10 @@ class UniHSI_PartNet(humanoid_amp_task.HumanoidAMPTask):
         rand_rot = quat_from_angle_axis(rand_rot_theta, axis)
         self._humanoid_root_states[env_ids[reset], 3:7] = rand_rot[env_ids[reset]]
 
-        dist_max = 4
-        dist_min = 2
+        # dist_max = 4
+        # dist_min = 2
+        dist_max = 8
+        dist_min = 4
         rand_dist_y = (dist_max - dist_min) * torch.rand([self.num_envs], device=self.device) + dist_min
         rand_dist_x = (dist_max - dist_min) * torch.rand([self.num_envs], device=self.device) + dist_min
         x_sign = torch.from_numpy(np.random.choice((-1, 1), [self.num_envs])).to(self.device)
@@ -673,7 +675,7 @@ class UniHSI_PartNet(humanoid_amp_task.HumanoidAMPTask):
                 self.save_dict["pid"] = self.pid
                 self.save_dict["object_type"] = self.otype
 
-                save_dir = os.path.join("./data/partnet_UniHSI", self.pid)
+                save_dir = os.path.join("./data/partnet_UniHSI_0802", self.pid)
                 if not os.path.exists(save_dir):
                     os.mkdir(save_dir)
 

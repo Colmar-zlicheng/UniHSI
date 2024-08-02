@@ -1,5 +1,5 @@
 python3 unihsi/run.py \
-    --task UniHSI_PartNet\
+    --task UniHSI_PartNet_BKP\
     --test \
     --num_envs 1 \
     --cfg_env unihsi/data/cfg/humanoid_unified_interaction_scene_64.yaml \

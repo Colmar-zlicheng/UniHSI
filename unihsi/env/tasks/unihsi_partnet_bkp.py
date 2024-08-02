@@ -104,7 +104,7 @@ def VaryPoint(data, axis, degree):
     newData = np.dot(data, xyzArray[axis])
     return newData
 
-class UniHSI_PartNet(humanoid_amp_task.HumanoidAMPTask):
+class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
 
     def __init__(self, cfg, sim_params, physics_engine, device_type, device_id, headless):
         num_scenes = cfg["env"]["numScenes"] 
@@ -574,6 +574,8 @@ class UniHSI_PartNet(humanoid_amp_task.HumanoidAMPTask):
 
         dist_max = 4
         dist_min = 2
+        # dist_max = 8
+        # dist_min = 4
         rand_dist_y = (dist_max - dist_min) * torch.rand([self.num_envs], device=self.device) + dist_min
         rand_dist_x = (dist_max - dist_min) * torch.rand([self.num_envs], device=self.device) + dist_min
         x_sign = torch.from_numpy(np.random.choice((-1, 1), [self.num_envs])).to(self.device)
