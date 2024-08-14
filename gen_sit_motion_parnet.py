@@ -14,6 +14,7 @@ def trans_to_center(obj_value):
 
 
 def aug_mesh(a, obj_value):
+    obj_value['aug_count'] = a
     return obj_value
 
 

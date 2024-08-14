@@ -278,6 +278,17 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
     def _extra_load_meshinfo(self, pid, obj_id, obj):
         pass
 
+    def operate_mesh_with(mesh, obj):
+        for r in obj['rotate']:
+            R = mesh.get_rotation_matrix_from_xyz(r)
+            mesh.rotate(R, center=(0, 0, 0))
+        mesh.scale(obj['scale'], center=mesh.get_center())
+        mesh_vertices_single = np.asarray(mesh.vertices).astype(np.float32())
+        mesh.translate((0, 0, -mesh_vertices_single[:, 2].min()))
+        mesh.translate(obj['transfer'])  #  not collision with init human
+        # mesh.translate(obj['multi_obj_offset'])
+        return mesh
+
     def _load_mesh(self):
 
         mesh_vertices_list = []
@@ -298,14 +309,7 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
                 pid = obj['id']
                 self._extra_load_meshinfo(pid, obj_id, obj)
                 mesh = o3d.io.read_triangle_mesh('data/partnet/' + pid + '/models/model_normalized.obj')
-                for r in obj['rotate']:
-                    R = mesh.get_rotation_matrix_from_xyz(r)
-                    mesh.rotate(R, center=(0, 0, 0))
-                mesh.scale(obj['scale'], center=mesh.get_center())
-                mesh_vertices_single = np.asarray(mesh.vertices).astype(np.float32())
-                mesh.translate((0, 0, -mesh_vertices_single[:, 2].min()))
-                mesh.translate(obj['transfer'])  #  not collision with init human
-                # mesh.translate(obj['multi_obj_offset'])
+                mesh = self.operate_mesh_with(mesh, obj)
                 mesh_vertices_single = np.asarray(mesh.vertices).astype(np.float32())
                 mesh_triangles_single = np.asarray(mesh.triangles).astype(np.uint32)
 

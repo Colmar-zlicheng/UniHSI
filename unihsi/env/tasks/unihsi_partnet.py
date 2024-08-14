@@ -36,6 +36,12 @@ class UniHSI_PartNet(UniHSI_PartNet_BKP):
         self.count = 0
         self.obj_info = obj.copy()
         del self.obj_info['count']
+        self.obj_info["stand_point"] = self.obj_info["stand_point"][0]
+
+    def get_save_dir(self):
+        save_dir = os.path.join(self.save_root, self.pid)
+        if not os.path.exists(save_dir):
+            os.mkdir(save_dir)
 
     def _save_in_reset(self, reset, fulfill):
         if reset:
@@ -59,9 +65,7 @@ class UniHSI_PartNet(UniHSI_PartNet_BKP):
                 self.save_dict["pid"] = self.pid
                 self.save_dict["object_type"] = self.otype
 
-                save_dir = os.path.join(self.save_root, self.pid)
-                if not os.path.exists(save_dir):
-                    os.mkdir(save_dir)
+                save_dir = self.get_save_dir()
 
                 with open(os.path.join(save_dir, f"demo_motion_{self.count}.pkl"), 'wb') as f:
                     pickle.dump(self.save_dict, f)
