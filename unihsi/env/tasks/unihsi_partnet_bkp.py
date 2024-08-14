@@ -193,7 +193,12 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
         self.still = torch.zeros([self.num_envs], device=self.device, dtype=torch.bool)
         self.still_buf = torch.zeros([self.num_envs], device=self.device, dtype=torch.float)
 
+        self._init_saving()
+
         return
+
+    def _init_saving(self):
+        pass
 
     def _create_ground_plane(self):
         self._create_mesh_ground()
@@ -270,6 +275,9 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
             self.joint_pairs[plan_id, step_idx] = torch.tensor(joint_pairs)
             self.joint_pairs_valid[plan_id, step_idx] = torch.tensor(joint_pairs_valid)
 
+    def _extra_load_meshinfo(self, pid, obj_id, obj):
+        pass
+
     def _load_mesh(self):
 
         mesh_vertices_list = []
@@ -288,6 +296,7 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
             for obj_id in objs:
                 obj = objs[obj_id]
                 pid = obj['id']
+                self._extra_load_meshinfo(pid, obj_id, obj)
                 mesh = o3d.io.read_triangle_mesh('data/partnet/' + pid + '/models/model_normalized.obj')
                 for r in obj['rotate']:
                     R = mesh.get_rotation_matrix_from_xyz(r)
@@ -583,6 +592,9 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
 
         self._reset_target(env_ids, success)
 
+    def _save_in_reset(self, reset, fulfill):
+        pass
+
     def _reset_target(self, env_ids, success):
 
         contact_type_steps = self.contact_type_step[self.scene_for_env, self.step_mode]
@@ -641,18 +653,13 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
         self.envs_obj_pcd_buffer[env_ids, ..., 2] += self.rand_dist_z[self.env_scene_idx_row,
                                                                       self.env_scene_idx_col][..., None, None][env_ids]
 
-        # if reset:
-        #     self.save_dict = {}
-        #     if fulfill:
-        #         if self.headless == False:
-        #             self.gym.destroy_viewer(self.viewer)
-        #         self.gym.destroy_sim(self.sim)
-        #         exit(0)
+        self._save_in_reset(reset, fulfill)
 
     def pre_physics_step(self, actions):
         super().pre_physics_step(actions)
         self._prev_root_pos[:] = self._humanoid_root_states[..., 0:3]
         # print(self._humanoid_root_states.shape) # [1, 13]
+        # print(type(self._humanoid_root_states))  # [1, 13]
         # print(self._dof_pos.shape) # [1, 28]
         # print(self._dof_vel.shape)  # [1, 28]
         # print(self._dof_state.shape)  # [28, 2]

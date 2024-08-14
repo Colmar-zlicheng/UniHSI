@@ -6,6 +6,7 @@ env:
   episodeLength: 500
   isFlagrun: False
   enableDebugVis: False
+  save_root: null
   
   pdControl: True
   powerScale: 1.0
