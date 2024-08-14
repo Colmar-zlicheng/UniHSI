@@ -17,9 +17,9 @@ def aug_mesh(a, obj_value):
     return obj_value
 
 
-def run_cmd(args, i, a, value_final, key, tmp_path):
-    value_final = trans_to_center(value_final)
-    tmp_dict = {key: value_final}
+def run_cmd(args, i, a, value_use, key, tmp_path):
+    value_use = trans_to_center(value_use)
+    tmp_dict = {key: value_use}
 
     with open(tmp_path, 'w') as f:
         json.dump(tmp_dict, f, indent=4)
@@ -62,7 +62,7 @@ if __name__ == '__main__':
         value["obj"]["000"]["count"] = args.num
 
         if args.task == "UniHSI_PartNet":
-            run_cmd(args, i, 0, value_final, key, tmp_path)
+            run_cmd(args, i, 0, value, key, tmp_path)
         elif args.task == "UniHSI_PartNet_AUG":
             for a in range(args.aug_num):
                 value_final = aug_mesh(a, value)

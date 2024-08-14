@@ -34,6 +34,8 @@ class UniHSI_PartNet(UniHSI_PartNet_BKP):
         self.otype = obj['name']
         self.n_count = obj['count']
         self.count = 0
+        self.obj_info = obj.copy()
+        del self.obj_info['count']
 
     def _save_in_reset(self, reset, fulfill):
         if reset:
@@ -63,6 +65,10 @@ class UniHSI_PartNet(UniHSI_PartNet_BKP):
 
                 with open(os.path.join(save_dir, f"demo_motion_{self.count}.pkl"), 'wb') as f:
                     pickle.dump(self.save_dict, f)
+
+                if self.count == 0:
+                    with open(os.path.join(save_dir, "meta.json"), 'w') as f:
+                        json.dump(self.obj_info, f, indent=4)
 
                 self.count += 1
                 if self.count >= self.n_count:
