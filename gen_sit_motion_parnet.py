@@ -1,6 +1,17 @@
 import os
 import argparse
 import json
+import numpy as np
+
+
+def trans_to_center(obj_value):
+    transfer = np.array(obj_value["obj"]["000"]["transfer"])
+    stand_point = np.array(obj_value["obj"]["000"]["stand_point"])
+    stand_point = stand_point - transfer[None, :]
+    obj_value["obj"]["000"]["transfer"] = [0, 0, 0]
+    obj_value["obj"]["000"]["stand_point"] = np.ndarray.tolist(stand_point)
+    return obj_value
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -28,7 +39,10 @@ if __name__ == '__main__':
             continue
 
         value["obj"]["000"]["count"] = args.num
+
+        value = trans_to_center(value)
         tmp_dict = {key: value}
+
         with open(tmp_path, 'w') as f:
             json.dump(tmp_dict, f, indent=4)
 
