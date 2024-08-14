@@ -25,8 +25,6 @@ def aug_mesh(a, obj_value):
     origin_scale = obj_value["obj"]["000"]['scale']
     z_rate = 0.2
     if a == 0:
-        # auged_scale = aug_scale(origin_scale, [-0.2, -0.2])
-        # scale = [auged_scale, auged_scale, auged_scale]
         scale = [origin_scale, origin_scale, origin_scale]
     elif a == 1:
         auged_scale = aug_scale(origin_scale, [-0.3, z_rate])
