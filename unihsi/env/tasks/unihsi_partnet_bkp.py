@@ -198,7 +198,7 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
         return
 
     def _init_saving(self):
-        pass
+        self.fulfill_threshold = 0.1
 
     def _create_ground_plane(self):
         self._create_mesh_ground()
@@ -608,7 +608,7 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
         contact_type_steps = self.contact_type_step[self.scene_for_env, self.step_mode]
         contact_valid_steps = self.contact_valid_step[self.scene_for_env, self.step_mode]
         fulfill = ((contact_valid_steps & \
-                     (((contact_type_steps) & (self.joint_diff_buff < 0.1)) | (((~contact_type_steps) & (self.joint_diff_buff >= 0.05))))) \
+                     (((contact_type_steps) & (self.joint_diff_buff < self.fulfill_threshold)) | (((~contact_type_steps) & (self.joint_diff_buff >= 0.05))))) \
                         | (~contact_valid_steps))[env_ids] & (success[:, None]) # need add contact direction
         fulfill = torch.all(fulfill, dim=-1)
 

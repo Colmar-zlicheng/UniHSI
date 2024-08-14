@@ -19,6 +19,18 @@ from .unihsi_partnet import UniHSI_PartNet
 
 class UniHSI_PartNet_AUG(UniHSI_PartNet):
 
+    def _init_saving(self):
+        self.try_num = 0
+        self.max_try = 5
+        self.fulfill_threshold = 0.05
+        self.save_dict = {}
+        self.humanoid_root_states_list = []
+        self.dof_states_list = []
+        self.rigid_body_states_list = []
+        self.if_lie = False
+        self.save_root = self.cfg["env"]["save_root"]
+        assert self.save_root is not None
+        
     def operate_mesh_with(self, mesh, obj):
         for r in obj['rotate']:
             R = mesh.get_rotation_matrix_from_xyz(r)

@@ -21,6 +21,8 @@ class UniHSI_PartNet(UniHSI_PartNet_BKP):
 
     def _init_saving(self):
         self.try_num = 0
+        self.max_try = 3
+        self.fulfill_threshold = 0.1
         self.save_dict = {}
         self.humanoid_root_states_list = []
         self.dof_states_list = []
@@ -60,7 +62,7 @@ class UniHSI_PartNet(UniHSI_PartNet_BKP):
             self.dof_states_list = []
             self.rigid_body_states_list = []
 
-            if fulfill or self.try_num == 3:
+            if fulfill or self.try_num == self.max_try:
 
                 self.save_dict["fulfill"] = fulfill.item()
                 self.save_dict["pid"] = self.pid

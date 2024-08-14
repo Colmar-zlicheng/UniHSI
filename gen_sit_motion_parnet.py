@@ -23,14 +23,16 @@ def aug_mesh(a, obj_value):
 
     obj_value["obj"]["000"]['aug_count'] = a
     origin_scale = obj_value["obj"]["000"]['scale']
-
+    z_rate = 0.2
     if a == 0:
+        # auged_scale = aug_scale(origin_scale, [-0.2, -0.2])
+        # scale = [auged_scale, auged_scale, auged_scale]
         scale = [origin_scale, origin_scale, origin_scale]
     elif a == 1:
-        auged_scale = aug_scale(origin_scale, [-0.3, 0.3])
+        auged_scale = aug_scale(origin_scale, [-0.3, z_rate])
         scale = [auged_scale, auged_scale, auged_scale]
     elif a == 2:
-        auged_scale = aug_scale(origin_scale, [0.1, 0.3])
+        auged_scale = aug_scale(origin_scale, [0.05, z_rate])
         scale = [auged_scale, auged_scale, auged_scale]
     elif a == 3:
         auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
@@ -48,7 +50,7 @@ def aug_mesh(a, obj_value):
         auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
         scale = [origin_scale, auged_scale, origin_scale]
     elif a == 8:
-        auged_scale = aug_scale(origin_scale, [0.1, 0.3])
+        auged_scale = aug_scale(origin_scale, [0.05, z_rate])
         scale = [origin_scale, origin_scale, auged_scale]
     elif a == 9:
         auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
@@ -87,7 +89,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--save_root', type=str, required=True)
     parser.add_argument('--task', type=str, required=True, choices=['UniHSI_PartNet', 'UniHSI_PartNet_AUG'])
     parser.add_argument('--viz', action='store_true', default=False)
-    parser.add_argument('--actions', default=["chair", "bed"])
+    parser.add_argument('--actions', default=["chair"])
     args = parser.parse_args()
 
     with open(args.json, 'r') as f:
