@@ -3,6 +3,7 @@ import argparse
 import json
 import numpy as np
 import random
+from copy import deepcopy
 
 
 def trans_to_center(obj_value):
@@ -61,7 +62,7 @@ def aug_mesh(a, obj_value):
 
 
 def run_cmd(args, i, a, value_use, key, tmp_path):
-    value_use = trans_to_center(value_use)
+    # value_use = trans_to_center(value_use)
     tmp_dict = {key: value_use}
 
     with open(tmp_path, 'w') as f:
@@ -108,7 +109,7 @@ if __name__ == '__main__':
             run_cmd(args, i, 0, value, key, tmp_path)
         elif args.task == "UniHSI_PartNet_AUG":
             for a in range(args.aug_num):
-                value_final = aug_mesh(a, value)
+                value_final = aug_mesh(a, deepcopy(value))
                 run_cmd(args, i, a, value_final, key, tmp_path)
         else:
             raise ValueError()
