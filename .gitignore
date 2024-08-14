@@ -1,6 +1,6 @@
 *.pyc
 
-data
+/data
 wandb
 output
 checkpoints

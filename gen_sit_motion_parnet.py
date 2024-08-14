@@ -30,6 +30,6 @@ if __name__ == '__main__':
 
         print(f"\033[91mbegin {i}/{len_objs}\033[0m")
         os.system(
-            f"CUDA_VISIBLE_DEVICES={args.gpu_id} python3 unihsi/run.py --obj_file {tmp_path} --task UniHSI_PartNet --test --headless --num_envs 1 --cfg_env unihsi/data/cfg/humanoid_unified_interaction_scene_64.yaml --cfg_train unihsi/data/cfg/train/rlg/amp_humanoid_task_deep_layer_2we.yaml --motion_file motion_clips/chair_mo.npy --checkpoint checkpoints/Humanoid.pth"
+            f"CUDA_VISIBLE_DEVICES={args.gpu_id} python3 unihsi/run.py --obj_file {tmp_path} --task UniHSI_PartNet --test --headless --num_envs 1 --cfg_env unihsi/data/cfg/humanoid_unified_interaction_scene_0.yaml --cfg_train unihsi/data/cfg/train/rlg/amp_humanoid_task_deep_layer_2we.yaml --motion_file motion_clips/chair_mo.npy --checkpoint checkpoints/Humanoid.pth"
         )
         print(f"\033[91mend {i}/{len_objs}\033[0m")
