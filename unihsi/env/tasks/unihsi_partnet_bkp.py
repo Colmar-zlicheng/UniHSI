@@ -289,6 +289,13 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
         # mesh.translate(obj['multi_obj_offset'])
         return mesh
 
+    def operate_pcd_with(self, pcd, obj):
+        for r in obj['rotate']:
+            R = pcd.get_rotation_matrix_from_xyz(r)
+            pcd.rotate(R, center=(0, 0, 0))
+        pcd.scale(obj['scale'], center=pcd.get_center())
+        return pcd
+
     def _load_mesh(self):
 
         mesh_vertices_list = []
@@ -399,10 +406,7 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
                     matrix = np.linalg.inv(matrix)
                     pcd.transform(matrix)
 
-                for r in obj['rotate']:
-                    R = pcd.get_rotation_matrix_from_xyz(r)
-                    pcd.rotate(R, center=(0, 0, 0))
-                pcd.scale(obj['scale'], center=pcd.get_center())
+                pcd = self.operate_pcd_with(pcd, obj)
 
                 if pid == '11570':
                     R = pcd.get_rotation_matrix_from_xyz((0, 0, -np.pi))
