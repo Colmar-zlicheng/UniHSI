@@ -278,7 +278,7 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
     def _extra_load_meshinfo(self, pid, obj_id, obj):
         pass
 
-    def operate_mesh_with(mesh, obj):
+    def operate_mesh_with(self, mesh, obj):
         for r in obj['rotate']:
             R = mesh.get_rotation_matrix_from_xyz(r)
             mesh.rotate(R, center=(0, 0, 0))

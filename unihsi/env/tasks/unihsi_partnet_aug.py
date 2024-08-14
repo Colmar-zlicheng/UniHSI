@@ -19,7 +19,7 @@ from .unihsi_partnet import UniHSI_PartNet
 
 class UniHSI_PartNet_AUG(UniHSI_PartNet):
 
-    def operate_mesh_with(mesh, obj):
+    def operate_mesh_with(self, mesh, obj):
         for r in obj['rotate']:
             R = mesh.get_rotation_matrix_from_xyz(r)
             mesh.rotate(R, center=(0, 0, 0))
@@ -42,6 +42,7 @@ class UniHSI_PartNet_AUG(UniHSI_PartNet):
         self.obj_info["stand_point"] = self.obj_info["stand_point"][0]
 
     def get_save_dir(self):
-        save_dir = os.path.join(self.save_root, self.pid, self.aug_count)
+        save_dir = os.path.join(self.save_root, self.pid, f"{self.aug_count}")
         if not os.path.exists(save_dir):
             os.makedirs(save_dir, exist_ok=True)
+        return save_dir

@@ -42,6 +42,7 @@ class UniHSI_PartNet(UniHSI_PartNet_BKP):
         save_dir = os.path.join(self.save_root, self.pid)
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
+        return save_dir
 
     def _save_in_reset(self, reset, fulfill):
         if reset:
