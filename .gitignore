@@ -5,3 +5,4 @@ wandb
 output
 checkpoints
 tmp
+gen_data

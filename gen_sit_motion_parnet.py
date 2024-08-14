@@ -10,6 +10,7 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--num', type=int, default=5)
     parser.add_argument('-s', '--save_root', type=str, required=True)
     parser.add_argument('--task', type=str, required=True, choices=['UniHSI_PartNet', 'UniHSI_PartNet_aug'])
+    parser.add_argument('--viz', action='store_true', default=False)
     args = parser.parse_args()
 
     with open(args.json, 'r') as f:
@@ -30,8 +31,11 @@ if __name__ == '__main__':
         with open(tmp_path, 'w') as f:
             json.dump(tmp_dict, f, indent=4)
 
+        
+        viz = "" if args.viz else "--headless"
+
         print(f"\033[91mbegin {i}/{len_objs}\033[0m")
         os.system(
-            f"CUDA_VISIBLE_DEVICES={args.gpu_id} python3 unihsi/run.py --obj_file {tmp_path} --task {args.task} --save_root {args.save_root}--test --headless --num_envs 1 --cfg_env unihsi/data/cfg/humanoid_unified_interaction_scene_0.yaml --cfg_train unihsi/data/cfg/train/rlg/amp_humanoid_task_deep_layer_2we.yaml --motion_file motion_clips/chair_mo.npy --checkpoint checkpoints/Humanoid.pth"
+            f"CUDA_VISIBLE_DEVICES={args.gpu_id} python3 unihsi/run.py --obj_file {tmp_path} --task {args.task} --save_root {args.save_root} {viz} --test --num_envs 1 --cfg_env unihsi/data/cfg/humanoid_unified_interaction_scene_0.yaml --cfg_train unihsi/data/cfg/train/rlg/amp_humanoid_task_deep_layer_2we.yaml --motion_file motion_clips/chair_mo.npy --checkpoint checkpoints/Humanoid.pth"
         )
         print(f"\033[91mend {i}/{len_objs}\033[0m")
