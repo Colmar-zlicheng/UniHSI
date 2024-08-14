@@ -347,6 +347,10 @@ def get_args(benchmark=False):
         "name": "--obj_file",
         "type": str,
         "default": ""
+    }, {
+        "name": "--save_root",
+        "type": str,
+        "default": None
     }]
 
     if benchmark:
