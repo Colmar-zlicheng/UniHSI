@@ -11,6 +11,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--save_root', type=str, required=True)
     parser.add_argument('--task', type=str, required=True, choices=['UniHSI_PartNet', 'UniHSI_PartNet_aug'])
     parser.add_argument('--viz', action='store_true', default=False)
+    parser.add_argument('--actions', default=["chair", "bed"])
     args = parser.parse_args()
 
     with open(args.json, 'r') as f:
@@ -23,7 +24,7 @@ if __name__ == '__main__':
         key = str(i).rjust(4, "0")
         value = all_objs[key]
 
-        if value["obj"]["000"]["name"] == "reach":
+        if not value["obj"]["000"]["name"] in args.actions:
             continue
 
         value["obj"]["000"]["count"] = args.num
@@ -31,7 +32,6 @@ if __name__ == '__main__':
         with open(tmp_path, 'w') as f:
             json.dump(tmp_dict, f, indent=4)
 
-        
         viz = "" if args.viz else "--headless"
 
         print(f"\033[91mbegin {i}/{len_objs}\033[0m")
