@@ -2,6 +2,7 @@ import os
 import argparse
 import json
 import numpy as np
+import random
 
 
 def trans_to_center(obj_value):
@@ -14,7 +15,48 @@ def trans_to_center(obj_value):
 
 
 def aug_mesh(a, obj_value):
+
+    def aug_scale(origin_scale, ratio_range):
+        ratio = 1 + random.uniform(ratio_range[0], ratio_range[1])
+        return origin_scale * ratio
+
     obj_value["obj"]["000"]['aug_count'] = a
+    origin_scale = obj_value["obj"]["000"]['scale']
+
+    if a == 0:
+        scale = [origin_scale, origin_scale, origin_scale]
+    elif a == 1:
+        auged_scale = aug_scale(origin_scale, [-0.3, 0.3])
+        scale = [auged_scale, auged_scale, auged_scale]
+    elif a == 2:
+        auged_scale = aug_scale(origin_scale, [0.1, 0.3])
+        scale = [auged_scale, auged_scale, auged_scale]
+    elif a == 3:
+        auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
+        scale = [auged_scale, auged_scale, auged_scale]
+    elif a == 4:
+        auged_scale = aug_scale(origin_scale, [0.1, 0.3])
+        scale = [auged_scale, origin_scale, origin_scale]
+    elif a == 5:
+        auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
+        scale = [auged_scale, origin_scale, origin_scale]
+    elif a == 6:
+        auged_scale = aug_scale(origin_scale, [0.1, 0.3])
+        scale = [origin_scale, auged_scale, origin_scale]
+    elif a == 7:
+        auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
+        scale = [origin_scale, auged_scale, origin_scale]
+    elif a == 8:
+        auged_scale = aug_scale(origin_scale, [0.1, 0.3])
+        scale = [origin_scale, origin_scale, auged_scale]
+    elif a == 9:
+        auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
+        scale = [origin_scale, origin_scale, auged_scale]
+    else:
+        raise ValueError()
+
+    obj_value["obj"]["000"]['scale'] = scale
+
     return obj_value
 
 

@@ -23,7 +23,25 @@ class UniHSI_PartNet_AUG(UniHSI_PartNet):
         for r in obj['rotate']:
             R = mesh.get_rotation_matrix_from_xyz(r)
             mesh.rotate(R, center=(0, 0, 0))
-        mesh.scale(obj['scale'], center=mesh.get_center())
+
+        # 定义各轴的缩放因子
+        scale_factors = np.array(obj['scale'])
+        # 计算网格的中心
+        center = mesh.get_center()
+        # 构建缩放矩阵
+        scale_matrix = np.eye(4)
+        scale_matrix[:3, :3] = np.diag(scale_factors)
+        # 构建平移到原点的矩阵
+        translate_to_origin = np.eye(4)
+        translate_to_origin[:3, 3] = -center
+        # 构建从原点平移回中心的矩阵
+        translate_back = np.eye(4)
+        translate_back[:3, 3] = center
+        # 将这些变换矩阵组合在一起
+        transformation = translate_back @ scale_matrix @ translate_to_origin
+        # 应用变换矩阵对网格进行非均匀缩放
+        mesh.transform(transformation)
+
         mesh_vertices_single = np.asarray(mesh.vertices).astype(np.float32())
         mesh.translate((0, 0, -mesh_vertices_single[:, 2].min()))
         mesh.translate(obj['transfer'])  #  not collision with init human
