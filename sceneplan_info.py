@@ -8,15 +8,32 @@ from tqdm import tqdm
 PARTNET_CHAIR_BED_PATH = "docs/partnet_chair_bed.json"
 
 
-class chair:
-    name = "chair"
-    obj_id = "{obj_id}"
-    scale = None
-    transfer = [None, -2, 0]
-    rotate = [[1.5707963267948966, 0, 0], [0, 0, -1.5707963267948966]]
-    stand_point = [None, None, 0.86]
-    contact_pairs = [[["chair000", "none", "none", "none", "none"]],
-                     [["chair000", "seat_soft_surface{surface_id}", "pelvis", "contact", "up"]]]
+class Chair:
+
+    def __init__(self, obj_id):
+        self.name = "chair"
+        self.obj_id = obj_id
+        self.scale = 1.2
+        trans_x = 1.2
+        trans_y = -0.8
+        self.transfer = [trans_x, trans_y, 0]
+        self.rotate = [[1.5707963267948966, 0, 0], [0, 0, -1.5707963267948966]]
+        self.stand_point = [trans_x + 0.7, trans_y, 0.86]
+
+        self.surface_id = self.get_parnet_chair_seat_surface_id(obj_id)
+        self.contact_pairs = [[["chair000", "none", "none", "none", "none"]],
+                              [["chair000", f"seat_soft_surface{self.surface_id}", "pelvis", "contact", "up"]]]
+
+    @staticmethod
+    def get_parnet_chair_seat_surface_id(obj_id, partnet_root="data/partnet_add"):
+        with open(os.path.join(partnet_root, obj_id, "result.json"), 'r') as f:
+            result = json.load(f)
+        children = result[0]["children"]
+        surface_id = -1
+        for child in children:
+            if child["text"] == "Chair Seat":
+                surface_id = child["children"][0]["id"]
+        return surface_id
 
 
 def parse_dict(obj_class):
@@ -34,29 +51,28 @@ def parse_dict(obj_class):
     }
 
 
-def get_parnet_chair_seat_surfave_id(obj_id):
-    pass
-
-
 def get_chair_info(args):
     with open(PARTNET_CHAIR_BED_PATH, 'r') as f:
         partnet_chair_bed = json.load(f)
+    parnet_unihsi = os.listdir("data/partnet")
     partnet_chair = []
     for chair_bed in partnet_chair_bed:
         if chair_bed[1] == "chair":
-            partnet_chair.append(chair_bed[0])
-    if arg.num != -1:
+            if chair_bed[0] not in parnet_unihsi:
+                partnet_chair.append(chair_bed[0])
+    if args.num != -1:
         partnet_chair = random.sample(partnet_chair, args.num)
 
     save_dict = {}
-    for i in tqdm(range(len(partnet_chair))):
-        chair_class = chair
-        obj_id = partnet_chair[i]
-        chair_class.obj_id = chair_class.obj_id.format(obj_id=obj_id)
-        surface_id = get_parnet_chair_seat_surfave_id(obj_id)
-        chair_class.contact_pairs[1][0][1] = chair_class.contact_pairs[1][0][1].format(surface_id=surface_id)
 
-        save_dict[str(i).rjust(4, '0')] = parse_dict(chair_class)
+    key_id = 0
+    for i in tqdm(range(len(partnet_chair))):
+        chair_class = Chair(partnet_chair[i])
+        if chair_class.surface_id == -1:
+            print("failed chair: ", partnet_chair[i])
+            continue
+        save_dict[str(key_id).rjust(4, '0')] = parse_dict(chair_class)
+        key_id += 1
 
     with open(args.save_path, 'w') as f:
         json.dump(save_dict, f, indent=4)
