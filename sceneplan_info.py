@@ -45,6 +45,7 @@ def parse_dict(obj_class):
                 "scale": obj_class.scale,
                 "transfer": obj_class.transfer,
                 "stand_point": [obj_class.stand_point] * 4,
+                "name": obj_class.name,
             },
         },
         "contact_pairs": obj_class.contact_pairs,
