@@ -32,7 +32,7 @@ class Chair:
         surface_id = -1
         for child in children:
             if child["text"] == "Chair Seat":
-                surface_id = child["children"][0]["id"]
+                surface_id = child["children"][0]["children"][0]["id"]
         return surface_id
 
 
