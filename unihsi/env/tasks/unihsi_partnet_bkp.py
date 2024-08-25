@@ -491,9 +491,13 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
         offset = 0
         labels = []
         for pid in partnet_id:
-            label_file = "data/partnet/" + pid + "/point_sample/sample-points-all-label-10000.txt"
+            if pid in os.listdir("data/partnet"):
+                partnet_root = "data/partnet/"
+            else:
+                partnet_root = "data/partnet_add/"
+            label_file = partnet_root + pid + "/point_sample/sample-points-all-label-10000.txt"
             label = load_label(label_file) + offset
-            result_file = "data/partnet/" + pid + "/result.json"
+            result_file = partnet_root + pid + "/result.json"
             with open(result_file, 'r') as fcc_file:
                 result_file = fcc_file.read()
             result = json.loads(result_file)
