@@ -20,9 +20,9 @@ class Chair:
         self.rotate = [[1.5707963267948966, 0, 0], [0, 0, -1.5707963267948966]]
         self.stand_point = [trans_x + 0.7, trans_y, 0.86]
 
-        self.surface_id = self.get_parnet_chair_seat_surface_id(obj_id)
+        self.surface_id, surface_type = self.get_parnet_chair_seat_surface_id(obj_id)
         self.contact_pairs = [[["chair000", "none", "none", "none", "none"]],
-                              [["chair000", f"seat_soft_surface{self.surface_id}", "pelvis", "contact", "up"]]]
+                              [["chair000", f"{surface_type}{self.surface_id}", "pelvis", "contact", "up"]]]
 
     @staticmethod
     def get_parnet_chair_seat_surface_id(obj_id, partnet_root="data/partnet_add"):
@@ -30,12 +30,14 @@ class Chair:
             result = json.load(f)
         children = result[0]["children"]
         surface_id = -1
+        surface_type = None
         for child in children:
             if child["text"] == "Chair Seat":
                 for c in child["children"]:
                     if c["text"] == "Seat Surface":
                         surface_id = c["children"][0]["id"]
-        return surface_id
+                        surface_type = c["children"][0]["name"]
+        return surface_id, surface_type
 
 
 def parse_dict(obj_class):
