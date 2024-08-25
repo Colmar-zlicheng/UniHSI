@@ -1,5 +1,6 @@
 # import wandb
 
+import os
 import torch
 
 from isaacgym import gymapi, gymtorch
@@ -315,7 +316,11 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
                 obj = objs[obj_id]
                 pid = obj['id']
                 self._extra_load_meshinfo(pid, obj_id, obj)
-                mesh = o3d.io.read_triangle_mesh('data/partnet/' + pid + '/models/model_normalized.obj')
+                if pid in os.listdir("data/partnet"):
+                    partnet_root = "data/partnet/"
+                else:
+                    partnet_root = "data/partnet_add/"
+                mesh = o3d.io.read_triangle_mesh(partnet_root + pid + '/models/model_normalized.obj')
                 mesh = self.operate_mesh_with(mesh, obj)
                 mesh_vertices_single = np.asarray(mesh.vertices).astype(np.float32())
                 mesh_triangles_single = np.asarray(mesh.triangles).astype(np.uint32)
@@ -393,7 +398,11 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
             for obj_id in objs:
                 obj = objs[obj_id]
                 pid = obj['id']
-                pcd = o3d.io.read_point_cloud("data/partnet/" + pid +
+                if pid in os.listdir("data/partnet"):
+                    partnet_root = "data/partnet/"
+                else:
+                    partnet_root = "data/partnet_add/"
+                pcd = o3d.io.read_point_cloud(partnet_root + pid +
                                               "/point_sample/sample-points-all-pts-label-10000.ply")
 
                 if pid == '11570' or pid == "11873" or pid == "4376" or pid == "5861":
