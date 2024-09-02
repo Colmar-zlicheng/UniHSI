@@ -3,6 +3,7 @@ import json
 import argparse
 import random
 import numpy as np
+import open3d as o3d
 from tqdm import tqdm
 
 PARTNET_CHAIR_BED_PATH = "docs/partnet_chair_bed.json"
@@ -47,9 +48,9 @@ class Bed:
         self.name = "bed"
         self.obj_id = obj_id
         self.scale = 3.0
-        self.transfer = [None, None, 0]
+        self.transfer = [3, -2, 0]
         self.rotate = [[1.5707963267948966, 0, 0], [0, 0, -1.5707963267948966]]
-        self.stand_point = [None, None, 0.86]
+        self.stand_point = self.get_bed_stand_point(obj_id)
 
         self.surface_id, surface_type, self.pillow_id = self.get_parnet_bed_mattress_id(obj_id)
         if self.pillow_id == -1:
@@ -66,6 +67,25 @@ class Bed:
                                ["bed000", f"{surface_type}{self.surface_id}", "left_foot", "contact", "none"],
                                ["bed000", f"{surface_type}{self.surface_id}", "right_foot", "contact", "none"],
                                ["bed000", head_contact, "head", "contact", "none"]]]
+
+    def get_bed_stand_point(self, obj_id, partnet_root="data/partnet_add"):
+        stand_point = [None, None, 0.86]
+
+        mesh = o3d.io.read_triangle_mesh(os.path.join(partnet_root, obj_id, 'models/model_normalized.obj'))
+        for r in self.rotate:
+            R = mesh.get_rotation_matrix_from_xyz(r)
+            mesh.rotate(R, center=(0, 0, 0))
+        mesh.scale(self.scale, center=mesh.get_center())
+        mesh_vertices_single = np.asarray(mesh.vertices).astype(np.float32())
+        mesh.translate((0, 0, -mesh_vertices_single[:, 2].min()))
+        mesh.translate(self.transfer)
+        mesh_vertices_single = np.asarray(mesh.vertices).astype(np.float32())
+
+        stand_point[0] = np.mean(mesh_vertices_single, 0)[0] + 0.1 * np.random.rand(1)[0] * (
+            np.max(mesh_vertices_single, 0)[0] - np.min(mesh_vertices_single, 0)[0])
+        stand_point[1] = np.max(mesh_vertices_single, 0)[1] + 0.3
+
+        return stand_point
 
     @staticmethod
     def get_parnet_bed_mattress_id(obj_id, partnet_root="data/partnet_add"):
