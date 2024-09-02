@@ -96,7 +96,7 @@ if __name__ == '__main__':
     parser.add_argument('--task', type=str, required=True, choices=['UniHSI_PartNet', 'UniHSI_PartNet_AUG'])
     parser.add_argument('-at', '--aug_type', type=str, default='default', choices=['default', 'random'])
     parser.add_argument('--viz', action='store_true', default=False)
-    parser.add_argument('--actions', default=["chair"])
+    parser.add_argument('--actions', default='chair', choices=['chair', 'bed'])
     args = parser.parse_args()
 
     with open(args.json, 'r') as f:
@@ -109,7 +109,7 @@ if __name__ == '__main__':
         key = str(i).rjust(4, "0")
         value = all_objs[key]
 
-        if not value["obj"]["000"]["name"] in args.actions:
+        if not value["obj"]["000"]["name"] == args.actions:
             continue
 
         value["obj"]["000"]["count"] = args.num
