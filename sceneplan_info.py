@@ -81,8 +81,9 @@ class Bed:
         mesh.translate(self.transfer)
         mesh_vertices_single = np.asarray(mesh.vertices).astype(np.float32())
 
-        stand_point[0] = np.mean(mesh_vertices_single, 0)[0] + 0.1 * np.random.rand(1)[0] * (
-            np.max(mesh_vertices_single, 0)[0] - np.min(mesh_vertices_single, 0)[0])
+        # stand_point[0] = np.mean(mesh_vertices_single, 0)[0] + (0.1 + 0.1 * np.random.rand(1)[0]) * (
+        # np.max(mesh_vertices_single, 0)[0] - np.min(mesh_vertices_single, 0)[0])
+        stand_point[0] = (np.max(mesh_vertices_single, 0)[0].item() + np.min(mesh_vertices_single, 0)[0]) / 2
         stand_point[1] = np.max(mesh_vertices_single, 0)[1] + 0.3
 
         return stand_point
