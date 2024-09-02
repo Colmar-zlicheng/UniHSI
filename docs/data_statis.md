@@ -18,4 +18,4 @@ final data root: `/home/liuyun/licheng/retarget_data`
 |folder |         Note           |  data size | final data folder |retargeted folder |
 |---|:---------------------:|:--------------:|:--------------:|:--------------:|
 | partnet_UniHSI_bed_AUG_0831 | beds in origin UniHSI | 22 beds * 10 aug * 10 init|  | |
-| partnet_UniHSI_bed_AUG_0901 | all extra regular beds in partnet | 56 beds * 10 aug * 10 init|  | |
+| partnet_UniHSI_bed_AUG_0901 | all extra 56 regular beds in partnet | 51 beds * 10 aug * 10 init|  | |
