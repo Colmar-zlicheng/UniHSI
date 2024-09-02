@@ -15,7 +15,7 @@ def trans_to_center(obj_value):
     return obj_value
 
 
-def aug_mesh(a, obj_value):
+def aug_mesh(a, obj_value, aug_type):
 
     def aug_scale(origin_scale, ratio_range):
         ratio = 1 + random.uniform(ratio_range[0], ratio_range[1])
@@ -23,36 +23,44 @@ def aug_mesh(a, obj_value):
 
     obj_value["obj"]["000"]['aug_count'] = a
     origin_scale = obj_value["obj"]["000"]['scale']
-    z_rate = 0.2
-    if a == 0:
-        scale = [origin_scale, origin_scale, origin_scale]
-    elif a == 1:
-        auged_scale = aug_scale(origin_scale, [-0.3, z_rate])
-        scale = [auged_scale, auged_scale, auged_scale]
-    elif a == 2:
-        auged_scale = aug_scale(origin_scale, [0.05, z_rate])
-        scale = [auged_scale, auged_scale, auged_scale]
-    elif a == 3:
-        auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
-        scale = [auged_scale, auged_scale, auged_scale]
-    elif a == 4:
-        auged_scale = aug_scale(origin_scale, [0.1, 0.3])
-        scale = [auged_scale, origin_scale, origin_scale]
-    elif a == 5:
-        auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
-        scale = [auged_scale, origin_scale, origin_scale]
-    elif a == 6:
-        auged_scale = aug_scale(origin_scale, [0.1, 0.3])
-        scale = [origin_scale, auged_scale, origin_scale]
-    elif a == 7:
-        auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
-        scale = [origin_scale, auged_scale, origin_scale]
-    elif a == 8:
-        auged_scale = aug_scale(origin_scale, [0.05, z_rate])
-        scale = [origin_scale, origin_scale, auged_scale]
-    elif a == 9:
-        auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
-        scale = [origin_scale, origin_scale, auged_scale]
+    if aug_type == "default":
+        z_rate = 0.2
+        if a == 0:
+            scale = [origin_scale, origin_scale, origin_scale]
+        elif a == 1:
+            auged_scale = aug_scale(origin_scale, [-0.3, z_rate])
+            scale = [auged_scale, auged_scale, auged_scale]
+        elif a == 2:
+            auged_scale = aug_scale(origin_scale, [0.05, z_rate])
+            scale = [auged_scale, auged_scale, auged_scale]
+        elif a == 3:
+            auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
+            scale = [auged_scale, auged_scale, auged_scale]
+        elif a == 4:
+            auged_scale = aug_scale(origin_scale, [0.1, 0.3])
+            scale = [auged_scale, origin_scale, origin_scale]
+        elif a == 5:
+            auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
+            scale = [auged_scale, origin_scale, origin_scale]
+        elif a == 6:
+            auged_scale = aug_scale(origin_scale, [0.1, 0.3])
+            scale = [origin_scale, auged_scale, origin_scale]
+        elif a == 7:
+            auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
+            scale = [origin_scale, auged_scale, origin_scale]
+        elif a == 8:
+            auged_scale = aug_scale(origin_scale, [0.05, z_rate])
+            scale = [origin_scale, origin_scale, auged_scale]
+        elif a == 9:
+            auged_scale = aug_scale(origin_scale, [-0.3, -0.1])
+            scale = [origin_scale, origin_scale, auged_scale]
+        else:
+            raise ValueError()
+    elif aug_type == "random":
+        scale_x = aug_scale(origin_scale, [-0.3, 0.3])
+        scale_y = aug_scale(origin_scale, [-0.3, 0.3])
+        scale_z = aug_scale(origin_scale, [-0.3, 0.2])
+        scale = [scale_x, scale_y, scale_z]
     else:
         raise ValueError()
 
@@ -86,6 +94,7 @@ if __name__ == '__main__':
     parser.add_argument('-an', '--aug_num', type=int, default=10)
     parser.add_argument('-s', '--save_root', type=str, required=True)
     parser.add_argument('--task', type=str, required=True, choices=['UniHSI_PartNet', 'UniHSI_PartNet_AUG'])
+    parser.add_argument('-at', '--aug_type', type=str, default='default', choices=['default', 'random'])
     parser.add_argument('--viz', action='store_true', default=False)
     parser.add_argument('--actions', default=["chair"])
     args = parser.parse_args()
@@ -109,7 +118,7 @@ if __name__ == '__main__':
             run_cmd(args, i, 0, value, key, tmp_path)
         elif args.task == "UniHSI_PartNet_AUG":
             for a in range(args.aug_num):
-                value_final = aug_mesh(a, deepcopy(value))
+                value_final = aug_mesh(a, deepcopy(value), args.aug_type)
                 run_cmd(args, i, a, value_final, key, tmp_path)
         else:
             raise ValueError()
