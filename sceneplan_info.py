@@ -6,6 +6,7 @@ import numpy as np
 from tqdm import tqdm
 
 PARTNET_CHAIR_BED_PATH = "docs/partnet_chair_bed.json"
+PARTNET_ADD_REGULAR_BED_PATH = "docs/partnet_add_regular_bed.json"
 
 
 class Chair:
@@ -38,6 +39,72 @@ class Chair:
                         surface_id = c["children"][0]["id"]
                         surface_type = c["children"][0]["name"]
         return surface_id, surface_type
+
+
+class Bed:
+
+    def __init__(self, obj_id):
+        self.name = "bed"
+        self.obj_id = obj_id
+        self.scale = 3.0
+        self.transfer = [None, None, 0]
+        self.rotate = [[1.5707963267948966, 0, 0], [0, 0, -1.5707963267948966]]
+        self.stand_point = [None, None, 0.86]
+
+        self.surface_id, surface_type, self.pillow_id = self.get_parnet_bed_mattress_id(obj_id)
+        if self.pillow_id == -1:
+            head_contact = f"{surface_type}{self.surface_id}"
+        else:
+            head_contact = f"pillow{self.pillow_id}"
+
+        self.contact_pairs = [[["bed000", "none", "none", "none", "none"]],
+                              [["bed000", f"{surface_type}{self.surface_id}", "pelvis", "contact", "up"],
+                               ["bed000", "floor", "left_foot", "contact", "none"],
+                               ["bed000", "floor", "right_foot", "contact", "none"],
+                               ["bed000", f"{surface_type}{self.surface_id}", "head", "not contact", "none"]],
+                              [["bed000", f"{surface_type}{self.surface_id}", "pelvis", "contact", "up"],
+                               ["bed000", f"{surface_type}{self.surface_id}", "left_foot", "contact", "none"],
+                               ["bed000", f"{surface_type}{self.surface_id}", "right_foot", "contact", "none"],
+                               ["bed000", head_contact, "head", "contact", "none"]]]
+
+    @staticmethod
+    def get_parnet_bed_mattress_id(obj_id, partnet_root="data/partnet_add"):
+        with open(os.path.join(partnet_root, obj_id, "result.json"), 'r') as f:
+            result = json.load(f)
+
+        children = result[0]["children"][0]
+        assert children["text"] == "Regular bed"
+        children = children["children"][0]
+        assert children["text"] == "Bed Unit"
+        children = children["children"]
+
+        surface_id = -1
+        pillow_id = -1
+        mattress_id = -1
+        blanket_id = -1
+
+        for child in children:
+            if child["text"] == "Bed sleep area":
+                for c in child["children"]:
+                    if c["text"] == "Pillow" and pillow_id == -1:
+                        pillow_id = c["id"]
+                    if c["text"] == "Mattress":
+                        mattress_id = c["id"]
+                    if c["text"] == "Blanket":
+                        blanket_id = c["id"]
+
+        if blanket_id == -1:
+            surface_id = mattress_id
+            surface_type = "mattress"
+        else:
+            if mattress_id == -1:
+                surface_id = blanket_id
+                surface_type = "blanket"
+            else:
+                surface_id = mattress_id
+                surface_type = "mattress"
+
+        return surface_id, surface_type, pillow_id
 
 
 def parse_dict(obj_class):
@@ -83,14 +150,37 @@ def get_chair_info(args):
         json.dump(save_dict, f, indent=4)
 
 
+def get_bed_info(args):
+    with open(PARTNET_ADD_REGULAR_BED_PATH, 'r') as f:
+        partnet_bed = json.load(f)
+    if args.num != -1:
+        partnet_bed = random.sample(partnet_bed, args.num)
+
+    save_dict = {}
+
+    key_id = 0
+    for i in tqdm(range(len(partnet_bed))):
+        bed_class = Bed(partnet_bed[i])
+        if bed_class.surface_id == -1:
+            print("failed bed: ", partnet_bed[i])
+            continue
+        save_dict[str(key_id).rjust(4, '0')] = parse_dict(bed_class)
+        key_id += 1
+
+    with open(args.save_path, 'w') as f:
+        json.dump(save_dict, f, indent=4)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-obj', '--object_type', default='chair', choices=['chair'])
+    parser.add_argument('-obj', '--object_type', default='chair', choices=['chair', 'bed'])
     parser.add_argument('-n', '--num', type=int, required=True)
     parser.add_argument('-s', '--save_path', type=str, required=True)
     arg = parser.parse_args()
 
     if arg.object_type == "chair":
         get_chair_info(arg)
+    elif arg.object_type == "bed":
+        get_bed_info(arg)
     else:
         raise ValueError()
