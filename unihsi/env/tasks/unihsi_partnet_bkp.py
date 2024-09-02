@@ -277,7 +277,8 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
             self.joint_pairs_valid[plan_id, step_idx] = torch.tensor(joint_pairs_valid)
 
     def _extra_load_meshinfo(self, pid, obj_id, obj):
-        pass
+        self.otype = obj['name']
+
 
     def operate_mesh_with(self, mesh, obj):
         for r in obj['rotate']:
@@ -639,10 +640,13 @@ class UniHSI_PartNet_BKP(humanoid_amp_task.HumanoidAMPTask):
         rand_rot = quat_from_angle_axis(rand_rot_theta, axis)
         self._humanoid_root_states[env_ids[reset], 3:7] = rand_rot[env_ids[reset]]
 
-        dist_max = 4
-        dist_min = 2
-        # dist_max = 8
-        # dist_min = 4
+        if self.otype == 'bed':
+            dist_max = 8
+            dist_min = 4
+        else:
+            dist_max = 4
+            dist_min = 2
+
         rand_dist_y = (dist_max - dist_min) * torch.rand([self.num_envs], device=self.device) + dist_min
         rand_dist_x = (dist_max - dist_min) * torch.rand([self.num_envs], device=self.device) + dist_min
         x_sign = torch.from_numpy(np.random.choice((-1, 1), [self.num_envs])).to(self.device)
