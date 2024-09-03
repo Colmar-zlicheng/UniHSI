@@ -177,7 +177,7 @@ gym.add_ground(sim, plane_params)
 with open(args.seq, 'rb') as f:
     motion_data_unihsi = pickle.load(f)
 
-walk = motion_data_unihsi['sit']
+walk = motion_data_unihsi['walk']
 sit = motion_data_unihsi['sit']
 humanoid_root_states = np.concatenate([walk['humanoid_root_states'], sit['humanoid_root_states']], axis=0)  # [N, 13]
 dof_states = np.concatenate([walk['dof_states'], sit['dof_states']], axis=0)  # [N, 28, 2]
@@ -205,10 +205,10 @@ object_pose.p = gymapi.Vec3(0.0, 0.0, 0.5)
 object_meta_info = json.load(open(os.path.join(os.path.dirname(args.seq), "meta.json"), "r"))
 partnet_id = os.path.basename(os.path.dirname(os.path.dirname(args.seq)))
 if partnet_id in os.listdir('data/partnet'):
-    obj_file = os.path.jion('data/partnet', partnet_id)
+    obj_file = os.path.join('data/partnet', partnet_id)
 else:
-    obj_file = os.path.jion('data/partnet_add', partnet_id)
-
+    obj_file = os.path.join('data/partnet_add', partnet_id)
+obj_file = os.path.join(obj_file, 'models/model_normalized.obj')
 obj_mesh = o3d.io.read_triangle_mesh(obj_file)  # 用trimesh读则需要区分TriangleMesh和Scene
 for r in object_meta_info["rotate"]:
     R = obj_mesh.get_rotation_matrix_from_xyz(r)
@@ -282,6 +282,7 @@ if show:
 # humanoid_root_states # [N, 13]
 # dof_states # [N, 28, 2]
 # rigid_body_states  # [N, 15, 13]
+amp_dof_states = np.zeros(28, dtype=gymapi.DofState.dtype)
 
 gym.prepare_sim(sim)
 for i in tqdm(range(humanoid_root_states.shape[0])):
@@ -298,21 +299,8 @@ for i in tqdm(range(humanoid_root_states.shape[0])):
                                             gymtorch.unwrap_tensor(root_reset_actors_indices), 1)
 
     # set joint angles
-    dof_states = torch.from_numpy(dof_states[i]).unsqueeze(0)
-    gym.set_actor_dof_states(envs[0], actor_handles[0], gymtorch.unwrap_tensor(dof_states), gymapi.STATE_POS)
-
-    # humanoid pose
-    # print("pelvis global pose =", pose.p, pose.r)
-    # print("19DoF local poses =", amp_dof_positions)
-    # print("19DoF joint names =", amp_dof_names)
-    # joint_pose = gym.get_actor_joint_transforms(
-    #     envs[0], actor_handles[0]
-    # )  # len = 24, item: (3D translation vector P, 4D quaternion Q (x, y, z, w)), in world space, 含义是：沿这个关节的转动 = 沿世界系的P处的frame Q的x轴正向的转动
-    # joint_names = gym.get_actor_joint_names(
-    #     envs[0], actor_handles[0]
-    # )  # 'left_hip_yaw_joint', 'left_hip_roll_joint', 'left_hip_pitch_joint', 'left_knee_joint', 'left_ankle_joint', 'right_hip_yaw_joint', 'right_hip_roll_joint', 'right_hip_pitch_joint', 'right_knee_joint', 'right_ankle_joint', 'torso_joint', 'd435_left_imager_joint', 'd435_rgb_module_joint', 'imu_joint', 'left_shoulder_pitch_joint', 'left_shoulder_roll_joint', 'left_shoulder_yaw_joint', 'left_elbow_joint', 'logo_joint', 'mid360_joint', 'right_shoulder_pitch_joint', 'right_shoulder_roll_joint', 'right_shoulder_yaw_joint', 'right_elbow_joint']
-    # print("24D joint global poses =", joint_pose, len(joint_pose), joint_pose[20][0])
-    # print("24D joint names =", joint_names)
+    amp_dof_states["pos"] = dof_states[i, :, 0]
+    gym.set_actor_dof_states(envs[0], actor_handles[0], amp_dof_states, gymapi.STATE_POS)
 
     if show:
         gym.step_graphics(sim)
