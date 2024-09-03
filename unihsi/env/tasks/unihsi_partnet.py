@@ -78,6 +78,7 @@ class UniHSI_PartNet(UniHSI_PartNet_BKP):
                         json.dump(self.obj_info, f, indent=4)
 
                 self.count += 1
+                self.if_lie = False
                 if self.count >= self.n_count:
                     if self.headless == False:
                         self.gym.destroy_viewer(self.viewer)
@@ -85,6 +86,7 @@ class UniHSI_PartNet(UniHSI_PartNet_BKP):
                     exit(0)
             else:
                 self.try_num += 1
+                self.if_lie = False
                 self.save_dict = {}
                 self.humanoid_root_states_list = []
                 self.dof_states_list = []
@@ -93,11 +95,14 @@ class UniHSI_PartNet(UniHSI_PartNet_BKP):
         else:
             if fulfill:
                 states = {
-                    "humanoid_root_states": torch.stack(self.humanoid_root_states_list[1:], dim=0),
-                    "dof_states": torch.stack(self.dof_states_list[1:], dim=0),
-                    "rigid_body_states": torch.stack(self.rigid_body_states_list[1:], dim=0)
+                    "humanoid_root_states": torch.stack(self.humanoid_root_states_list, dim=0),
+                    "dof_states": torch.stack(self.dof_states_list, dim=0),
+                    "rigid_body_states": torch.stack(self.rigid_body_states_list, dim=0)
                 }
                 if not self.if_lie:
+                    states["humanoid_root_states"] = states["humanoid_root_states"][1:]
+                    states["dof_states"] = states["dof_states"][1:]
+                    states["rigid_body_states"] = states["rigid_body_states"][1:]
                     self.save_dict["walk"] = states
                 else:
                     self.save_dict["sit"] = states
