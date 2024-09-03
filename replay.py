@@ -8,10 +8,9 @@ from isaacgym import gymutil
 from isaacgym import gymtorch
 import trimesh
 import torch
+import json
 import pickle
 from scipy.spatial.transform import Rotation as R
-# from pytorch3d.transforms import axis_angle_to_quaternion
-import pytorch_kinematics as pk
 import open3d as o3d
 
 
@@ -201,23 +200,45 @@ object_asset_options.override_com = True
 object_asset_options.vhacd_enabled = False
 object_pose = gymapi.Transform()
 object_pose.p = gymapi.Vec3(0.0, 0.0, 0.5)
-# object_asset_root = "/home/liuyun/Humanoid_IL_Benchmark/humanplus/HST/legged_gym/legged_gym/envs/assets"
 
 # load objects
-obj_file = os.path.join(os.path.dirname(os.path.dirname(args.seq)), "scene_mesh.obj")
-object_names = [obj_file]
-object_list = []
-for object_name in object_names:
-    object_collision_mesh_o3d = o3d.io.read_triangle_mesh(object_name)  # 用trimesh读则需要区分TriangleMesh和Scene
-    object_collision_mesh = trimesh.Trimesh(vertices=np.float32(object_collision_mesh_o3d.vertices),
-                                            faces=np.int32(object_collision_mesh_o3d.triangles))
-    object_vertices, object_faces = np.float32(object_collision_mesh.vertices).copy(), np.uint32(
-        object_collision_mesh.faces).copy()
-    tm_params = gymapi.TriangleMeshParams()
-    tm_params.nb_vertices = object_vertices.shape[0]
-    tm_params.nb_triangles = object_faces.shape[0]
-    # tm_params.transform.r = gymapi.Quat.from_euler_zyx(np.pi / 2, 0, -np.pi / 2)
-    object_list.append({"vertices": object_vertices, "faces": object_faces, "tm_params": tm_params})
+object_meta_info = json.load(open(os.path.join(os.path.dirname(args.seq), "meta.json"), "r"))
+partnet_id = os.path.basename(os.path.dirname(os.path.dirname(args.seq)))
+if partnet_id in os.listdir('data/partnet'):
+    obj_file = os.path.jion('data/partnet', partnet_id)
+else:
+    obj_file = os.path.jion('data/partnet_add', partnet_id)
+
+obj_mesh = o3d.io.read_triangle_mesh(obj_file)  # 用trimesh读则需要区分TriangleMesh和Scene
+for r in object_meta_info["rotate"]:
+    R = obj_mesh.get_rotation_matrix_from_xyz(r)
+    obj_mesh.rotate(R, center=(0, 0, 0))
+
+# rescale
+scale_factors = object_meta_info["scale"]
+if (isinstance(scale_factors, int)) or (isinstance(scale_factors, float)):
+    print("[warning] the scale is a scalar, not a list !!!")
+    scale_factors = [scale_factors, scale_factors, scale_factors]
+T_scale = np.eye(4)
+T_scale[:3, :3] = np.diag(scale_factors)
+T_to_origin = np.eye(4)
+T_to_origin[:3, 3] = -obj_mesh.get_center()
+T_back = -T_to_origin
+T = T_back @ T_scale @ T_to_origin
+obj_mesh.transform(T)
+
+obj_mesh_v = np.float32(obj_mesh.vertices)
+obj_mesh.translate((0, 0, -obj_mesh_v[:, 2].min()))
+obj_mesh.translate(object_meta_info["transfer"])
+
+object_collision_mesh = trimesh.Trimesh(vertices=np.float32(obj_mesh.vertices), faces=np.int32(obj_mesh.triangles))
+object_vertices, object_faces = np.float32(object_collision_mesh.vertices).copy(), np.uint32(
+    object_collision_mesh.faces).copy()
+tm_params = gymapi.TriangleMeshParams()
+tm_params.nb_vertices = object_vertices.shape[0]
+tm_params.nb_triangles = object_faces.shape[0]
+# tm_params.transform.r = gymapi.Quat.from_euler_zyx(np.pi / 2, 0, -np.pi / 2)
+object_list = [{"vertices": object_vertices, "faces": object_faces, "tm_params": tm_params}]
 
 env_object_ids = np.random.randint(0, len(object_list), num_envs)
 assert num_envs == 1
@@ -253,59 +274,45 @@ for i in range(num_envs):
 # position the camera
 if show:
     # right view
-    # cam_pos = gymapi.Vec3(3, 2.0, 0)
-    # cam_target = gymapi.Vec3(-3, 0, 0)
     cam_pos = gymapi.Vec3(0, -3, 2.0)
     cam_target = gymapi.Vec3(0, 3, 0)
     # front view
-    # cam_pos = gymapi.Vec3(0, 2.0, -2)
-    # cam_target = gymapi.Vec3(0, 0, 2)
     gym.viewer_camera_look_at(viewer, envs[0], cam_pos, cam_target)
 
+# humanoid_root_states # [N, 13]
+# dof_states # [N, 28, 2]
+# rigid_body_states  # [N, 15, 13]
+
 gym.prepare_sim(sim)
-for i in tqdm(range(motion_data.shape[0])):
+for i in tqdm(range(humanoid_root_states.shape[0])):
     gym.simulate(sim)
     gym.fetch_results(sim, True)
 
     # set global pose
-    t = torch.from_numpy(motion_global_translations[i])
-    q_wxyz = axis_angle_to_quaternion(torch.from_numpy(motion_global_rotations[i]))  # (w, x, y, z)
-    q_xyzw = torch.tensor([q_wxyz[1], q_wxyz[2], q_wxyz[3], q_wxyz[0]]).to(dtype=torch.float32)  # (x, y, z, w)
     actor_root_state = gym.acquire_actor_root_state_tensor(sim)
     root_states = gymtorch.wrap_tensor(actor_root_state)
-    root_states[:, :3] = t
-    root_states[:, 3:7] = q_xyzw
+    root_states = torch.from_numpy(humanoid_root_states[i]).unsqueeze(0)
     root_reset_actors_indices = torch.tensor([gym.get_actor_index(envs[0], actor_handles[0],
                                                                   gymapi.DOMAIN_SIM)]).to(dtype=torch.int32)
     gym.set_actor_root_state_tensor_indexed(sim, gymtorch.unwrap_tensor(root_states),
                                             gymtorch.unwrap_tensor(root_reset_actors_indices), 1)
 
     # set joint angles
-    for j in range(motion_data.shape[1]):
-        amp_dof_positions[j] = motion_data[i, j]
-    gym.set_actor_dof_states(envs[0], actor_handles[0], amp_dof_states, gymapi.STATE_POS)
+    dof_states = torch.from_numpy(dof_states[i]).unsqueeze(0)
+    gym.set_actor_dof_states(envs[0], actor_handles[0], gymtorch.unwrap_tensor(dof_states), gymapi.STATE_POS)
 
     # humanoid pose
-    print("pelvis global pose =", pose.p, pose.r)
-    print("19DoF local poses =", amp_dof_positions)
-    print("19DoF joint names =", amp_dof_names)
-    joint_pose = gym.get_actor_joint_transforms(
-        envs[0], actor_handles[0]
-    )  # len = 24, item: (3D translation vector P, 4D quaternion Q (x, y, z, w)), in world space, 含义是：沿这个关节的转动 = 沿世界系的P处的frame Q的x轴正向的转动
-    joint_names = gym.get_actor_joint_names(
-        envs[0], actor_handles[0]
-    )  # 'left_hip_yaw_joint', 'left_hip_roll_joint', 'left_hip_pitch_joint', 'left_knee_joint', 'left_ankle_joint', 'right_hip_yaw_joint', 'right_hip_roll_joint', 'right_hip_pitch_joint', 'right_knee_joint', 'right_ankle_joint', 'torso_joint', 'd435_left_imager_joint', 'd435_rgb_module_joint', 'imu_joint', 'left_shoulder_pitch_joint', 'left_shoulder_roll_joint', 'left_shoulder_yaw_joint', 'left_elbow_joint', 'logo_joint', 'mid360_joint', 'right_shoulder_pitch_joint', 'right_shoulder_roll_joint', 'right_shoulder_yaw_joint', 'right_elbow_joint']
-    print("24D joint global poses =", joint_pose, len(joint_pose), joint_pose[20][0])
-    print("24D joint names =", joint_names)
-
-    # # differentiable FK
-    # chain = pk.build_serial_chain_from_urdf(open("../assets/amp_description/urdf/amp.urdf", "rb").read(), "left_ankle_link")
-    # print(chain)
-    # print(chain.get_joint_parameter_names())
-    # th = amp_dof_positions.copy()
-    # ret = chain.forward_kinematics(th, end_only=False)
-    # print(ret)
-    # assert False
+    # print("pelvis global pose =", pose.p, pose.r)
+    # print("19DoF local poses =", amp_dof_positions)
+    # print("19DoF joint names =", amp_dof_names)
+    # joint_pose = gym.get_actor_joint_transforms(
+    #     envs[0], actor_handles[0]
+    # )  # len = 24, item: (3D translation vector P, 4D quaternion Q (x, y, z, w)), in world space, 含义是：沿这个关节的转动 = 沿世界系的P处的frame Q的x轴正向的转动
+    # joint_names = gym.get_actor_joint_names(
+    #     envs[0], actor_handles[0]
+    # )  # 'left_hip_yaw_joint', 'left_hip_roll_joint', 'left_hip_pitch_joint', 'left_knee_joint', 'left_ankle_joint', 'right_hip_yaw_joint', 'right_hip_roll_joint', 'right_hip_pitch_joint', 'right_knee_joint', 'right_ankle_joint', 'torso_joint', 'd435_left_imager_joint', 'd435_rgb_module_joint', 'imu_joint', 'left_shoulder_pitch_joint', 'left_shoulder_roll_joint', 'left_shoulder_yaw_joint', 'left_elbow_joint', 'logo_joint', 'mid360_joint', 'right_shoulder_pitch_joint', 'right_shoulder_roll_joint', 'right_shoulder_yaw_joint', 'right_elbow_joint']
+    # print("24D joint global poses =", joint_pose, len(joint_pose), joint_pose[20][0])
+    # print("24D joint names =", joint_names)
 
     if show:
         gym.step_graphics(sim)
