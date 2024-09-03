@@ -1,21 +1,3 @@
-"""
-Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
-
-NVIDIA CORPORATION and its licensors retain all intellectual property
-and proprietary rights in and to this software, related documentation
-and any modifications thereto. Any use, reproduction, disclosure or
-distribution of this software and related documentation without an express
-license agreement from NVIDIA CORPORATION is strictly prohibited.
-
-Franka Cube Pick
-----------------
-Use Jacobian matrix and inverse kinematics control of Franka robot to pick up a box.
-Damped Least Squares method from: https://www.math.ucsd.edu/~sbuss/ResearchWeb/ikmethods/iksurvey.pdf
-"""
-
-# conda activate isaac
-# python unitree_h1_retargeting_lsk.py
-# import keyboard
 import os
 import sys
 import numpy as np
@@ -26,6 +8,7 @@ from isaacgym import gymutil
 from isaacgym import gymtorch
 import trimesh
 import torch
+import pickle
 from scipy.spatial.transform import Rotation as R
 # from pytorch3d.transforms import axis_angle_to_quaternion
 import pytorch_kinematics as pk
@@ -100,7 +83,7 @@ custom_parameters = [
     {
         "name": "--seq",
         "type": str,
-        "default": "data/UniHSI_retargeted_data/1284/h1_kinematic_motions/1284_demo_motion_0.npz",
+        "default": "data/UniHSI_retargeted_data/1284/amp_kinematic_motions/1284_demo_motion_0.npz",
         "help": "Number of environments to create"
     },
 ]
@@ -148,33 +131,32 @@ if show:
     if viewer is None:
         raise Exception("Failed to create viewer")
 
-asset_root = "./assets"
+asset_root = "./unihsi/data/assets"
 
-# load h1 asset
-h1_asset_file = "robots/h1/urdf/h1.urdf"
-# h1_asset_file = "robots/h1_description/urdf/h1.urdf"
+# load amp asset
+amp_asset_file = "mjcf/amp_humanoid.xml"
 asset_options = gymapi.AssetOptions()
 asset_options.armature = 0.01
 asset_options.fix_base_link = True
 asset_options.disable_gravity = True
 asset_options.flip_visual_attachments = False
-h1_asset = gym.load_asset(sim, asset_root, h1_asset_file, asset_options)
-h1_dof_names = gym.get_asset_dof_names(h1_asset)
+amp_asset = gym.load_asset(sim, asset_root, amp_asset_file, asset_options)
+amp_dof_names = gym.get_asset_dof_names(amp_asset)
 
-h1_dof_props = gym.get_asset_dof_properties(h1_asset)
-h1_num_dofs = gym.get_asset_dof_count(h1_asset)
-h1_dof_states = np.zeros(h1_num_dofs, dtype=gymapi.DofState.dtype)
-h1_dof_types = [gym.get_asset_dof_type(h1_asset, i) for i in range(h1_num_dofs)]
-h1_dof_positions = h1_dof_states['pos']
-h1_lower_limits = h1_dof_props["lower"]
-h1_upper_limits = h1_dof_props["upper"]
-h1_ranges = h1_upper_limits - h1_lower_limits
-h1_mids = 0.3 * (h1_upper_limits + h1_lower_limits)
-h1_stiffnesses = h1_dof_props['stiffness']
-h1_dampings = h1_dof_props['damping']
-h1_armatures = h1_dof_props['armature']
-h1_has_limits = h1_dof_props['hasLimits']
-h1_dof_props['hasLimits'] = np.array([True] * h1_num_dofs)
+amp_dof_props = gym.get_asset_dof_properties(amp_asset)
+amp_num_dofs = gym.get_asset_dof_count(amp_asset)
+amp_dof_states = np.zeros(amp_num_dofs, dtype=gymapi.DofState.dtype)
+amp_dof_types = [gym.get_asset_dof_type(amp_asset, i) for i in range(amp_num_dofs)]
+amp_dof_positions = amp_dof_states['pos']
+amp_lower_limits = amp_dof_props["lower"]
+amp_upper_limits = amp_dof_props["upper"]
+amp_ranges = amp_upper_limits - amp_lower_limits
+amp_mids = 0.3 * (amp_upper_limits + amp_lower_limits)
+amp_stiffnesses = amp_dof_props['stiffness']
+amp_dampings = amp_dof_props['damping']
+amp_armatures = amp_dof_props['armature']
+amp_has_limits = amp_dof_props['hasLimits']
+amp_dof_props['hasLimits'] = np.array([True] * amp_num_dofs)
 
 num_envs = 1
 num_per_row = 1
@@ -192,15 +174,20 @@ plane_params = gymapi.PlaneParams()
 plane_params.normal = gymapi.Vec3(0.0, 0.0, 1.0)
 gym.add_ground(sim, plane_params)
 
-# load h1 motion data
-# motion_data_path = "/home/liuyun/Humanoid_IL_Benchmark/humanplus_zhikai/HST/isaacgym/h1_motion_data/ACCAD_walk_10fps.npy"
-# motion_data = np.load(motion_data_path)
-# motion_offset = np.array([0.0000, 0.0000, -0.3490, 0.6980, -0.3490, 0.0000, 0.0000, -0.3490, 0.6980, -0.3490, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000])
-# motion_data += motion_offset
-motion_data_overall = np.load(args.seq, allow_pickle=True)["arr_0"].item()
-motion_data = motion_data_overall["joint_angles"]
-motion_global_rotations = motion_data_overall["global_rotations"]
-motion_global_translations = motion_data_overall["global_translations"]
+# load amp motion data
+with open(args.seq, 'rb') as f:
+    motion_data_unihsi = pickle.load(f)
+
+walk = motion_data_unihsi['sit']
+sit = motion_data_unihsi['sit']
+humanoid_root_states = np.concatenate([walk['humanoid_root_states'], sit['humanoid_root_states']], axis=0)  # [N, 13]
+dof_states = np.concatenate([walk['dof_states'], sit['dof_states']], axis=0)  # [N, 28, 2]
+rigid_body_states = np.concatenate([walk['rigid_body_states'], sit['rigid_body_states']], axis=0)  # [N, 15, 13]
+if motion_data_unihsi['object_type'] == 'bed':
+    lie = motion_data_unihsi['lie']
+    humanoid_root_states = np.concatenate([humanoid_root_states, lie['humanoid_root_states']], axis=0)
+    dof_states = np.concatenate([dof_states, lie['dof_states']], axis=0)
+    rigid_body_states = np.concatenate([rigid_body_states, lie['rigid_body_states']], axis=0)
 
 initial_pose_ori = [0, 0, 0, 1]  # (x, y, z, w)
 
@@ -257,11 +244,11 @@ for i in range(num_envs):
     pose.p = gymapi.Vec3(0.0, 0.0, 1.05)
     pose.r = gymapi.Quat(*initial_pose_ori)
 
-    actor_handle = gym.create_actor(env, h1_asset, pose, "actor", i, 1)
+    actor_handle = gym.create_actor(env, amp_asset, pose, "actor", i, 1)
     actor_handles.append(actor_handle)
 
     # set default DOF positions
-    gym.set_actor_dof_states(env, actor_handle, h1_dof_states, gymapi.STATE_ALL)
+    gym.set_actor_dof_states(env, actor_handle, amp_dof_states, gymapi.STATE_ALL)
 
 # position the camera
 if show:
@@ -295,13 +282,13 @@ for i in tqdm(range(motion_data.shape[0])):
 
     # set joint angles
     for j in range(motion_data.shape[1]):
-        h1_dof_positions[j] = motion_data[i, j]
-    gym.set_actor_dof_states(envs[0], actor_handles[0], h1_dof_states, gymapi.STATE_POS)
+        amp_dof_positions[j] = motion_data[i, j]
+    gym.set_actor_dof_states(envs[0], actor_handles[0], amp_dof_states, gymapi.STATE_POS)
 
     # humanoid pose
     print("pelvis global pose =", pose.p, pose.r)
-    print("19DoF local poses =", h1_dof_positions)
-    print("19DoF joint names =", h1_dof_names)
+    print("19DoF local poses =", amp_dof_positions)
+    print("19DoF joint names =", amp_dof_names)
     joint_pose = gym.get_actor_joint_transforms(
         envs[0], actor_handles[0]
     )  # len = 24, item: (3D translation vector P, 4D quaternion Q (x, y, z, w)), in world space, 含义是：沿这个关节的转动 = 沿世界系的P处的frame Q的x轴正向的转动
@@ -312,10 +299,10 @@ for i in tqdm(range(motion_data.shape[0])):
     print("24D joint names =", joint_names)
 
     # # differentiable FK
-    # chain = pk.build_serial_chain_from_urdf(open("../assets/h1_description/urdf/h1.urdf", "rb").read(), "left_ankle_link")
+    # chain = pk.build_serial_chain_from_urdf(open("../assets/amp_description/urdf/amp.urdf", "rb").read(), "left_ankle_link")
     # print(chain)
     # print(chain.get_joint_parameter_names())
-    # th = h1_dof_positions.copy()
+    # th = amp_dof_positions.copy()
     # ret = chain.forward_kinematics(th, end_only=False)
     # print(ret)
     # assert False
