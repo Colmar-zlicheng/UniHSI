@@ -21,6 +21,20 @@ from .humanoid_amp_task import HumanoidAMPTask
 
 class UniHSI_PartNet_WALK(UniHSI_PartNet):
 
+    def _init_saving(self):
+        self.try_num = 0
+        self.max_try = 3
+        self.fulfill_threshold = 0.1
+        self.save_dict = {}
+        self.humanoid_root_states_list = []
+        self.dof_states_list = []
+        self.rigid_body_states_list = []
+        self.if_lie = False
+        self.save_root = self.cfg["env"]["save_root"]
+        assert self.save_root is not None
+
+        self.start_point = self.plan_items[0]['obj']['start_point']
+
     def get_save_dir(self):
         save_dir = os.path.join(self.save_root, self.pid)
         if not os.path.exists(save_dir):
@@ -121,16 +135,16 @@ class UniHSI_PartNet_WALK(UniHSI_PartNet):
         rand_rot = quat_from_angle_axis(rand_rot_theta, axis)
         self._humanoid_root_states[env_ids[reset], 3:7] = rand_rot[env_ids[reset]]
 
-        dist_max = 4
-        dist_min = 2
+        # dist_max = 4
+        # dist_min = 2
 
-        rand_dist_y = (dist_max - dist_min) * torch.rand([self.num_envs], device=self.device) + dist_min
-        rand_dist_x = (dist_max - dist_min) * torch.rand([self.num_envs], device=self.device) + dist_min
-        x_sign = torch.from_numpy(np.random.choice((-1, 1), [self.num_envs])).to(self.device)
-        y_sign = torch.from_numpy(np.random.choice((-1, 1), [self.num_envs])).to(self.device)
+        # rand_dist_y = (dist_max - dist_min) * torch.rand([self.num_envs], device=self.device) + dist_min
+        # rand_dist_x = (dist_max - dist_min) * torch.rand([self.num_envs], device=self.device) + dist_min
+        # x_sign = torch.from_numpy(np.random.choice((-1, 1), [self.num_envs])).to(self.device)
+        # y_sign = torch.from_numpy(np.random.choice((-1, 1), [self.num_envs])).to(self.device)
 
-        self._humanoid_root_states[env_ids[reset], 0] += self.x_offset[env_ids[reset]] + 10
-        self._humanoid_root_states[env_ids[reset], 1] += self.y_offset[env_ids[reset]] + 5
+        self._humanoid_root_states[env_ids[reset], 0] += self.x_offset[env_ids[reset]] + self.start_point[0]
+        self._humanoid_root_states[env_ids[reset], 1] += self.y_offset[env_ids[reset]] + self.start_point[1]
         self.step_mode[env_ids[reset]] = 0
 
         stand_point_choice = torch.from_numpy(np.random.choice((0, 1, 2, 3), [self.num_envs])).to(self.device)

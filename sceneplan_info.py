@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 PARTNET_CHAIR_BED_PATH = "docs/partnet_chair_bed.json"
 PARTNET_ADD_REGULAR_BED_PATH = "docs/partnet_add_regular_bed.json"
+CORE4D_RETARGETED_TORCHPOINTS_PATH = "data/CORE4D_retargeted_data_touchpoint"
 
 
 class Chair:
@@ -128,6 +129,52 @@ class Bed:
         return surface_id, surface_type, pillow_id
 
 
+class Walk:
+
+    def __init__(self, seq_id):
+        self.name = "walk"
+        self.obj_id = "40503"
+        self.seq_id = seq_id
+        self.scale = 0.1
+        self.transfer = [1.1744196176528932, -2, 0]
+        self.rotate = [[1.5707963267948966, 0, 0], [0, 0, -1.5707963267948966]]
+        end, start = self.get_points(seq_id)
+        self.stand_point = [end[0].item(), end[1].item(), 0.86]
+        self.start_point = [start[0].item(), start[1].item()]
+
+        self.contact_pairs = [[["object000", "none", "none", "none", "none"]]]
+
+    @staticmethod
+    def get_points(seq_id):
+
+        def load_data(file):
+            data = np.load(file, allow_pickle=True)["arr_0"].item()
+
+            T = data["link_global_poses"]["pelvis"].astype(np.float32)  # (N_frame, 4, 4)
+            pos = T[:, :3, 3].copy()
+            return pos[0]
+
+        data_path = os.path.join(CORE4D_RETARGETED_TORCHPOINTS_PATH, seq_id, "h1_kinematic_motions",
+                                 f"{seq_id}_data.npz")
+
+        end = load_data(data_path)
+        end_center = end[:2]
+
+        mesh_path = os.path.join(CORE4D_RETARGETED_TORCHPOINTS_PATH, seq_id, "scene_mesh.obj")
+        mesh = o3d.io.read_triangle_mesh(mesh_path)
+        vertices = np.asarray(mesh.vertices)
+        vertices_max = vertices.max(axis=0)
+        vertices_min = vertices.min(axis=0)
+        mesh_center = (vertices_min + vertices_max)[:2] / 2
+
+        direct = end_center - mesh_center
+        direct = direct / np.linalg.norm(direct)
+
+        start = end_center + 3 * direct
+
+        return end_center, start
+
+
 def parse_dict(obj_class):
     return {
         "obj": {
@@ -192,9 +239,25 @@ def get_bed_info(args):
         json.dump(save_dict, f, indent=4)
 
 
+def get_walk_info(args):
+    core4s_seqs = sorted(os.listdir(CORE4D_RETARGETED_TORCHPOINTS_PATH))
+    save_dict = {}
+
+    key_id = 0
+    for i in tqdm(range(len(core4s_seqs))):
+        walk_class = Walk(core4s_seqs[i])
+        tmp_dict = parse_dict(walk_class)
+        tmp_dict['obj']['000']['start_point'] = walk_class.start_point
+        save_dict[str(key_id).rjust(4, '0')] = tmp_dict
+        key_id += 1
+
+    with open(args.save_path, 'w') as f:
+        json.dump(save_dict, f, indent=4)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-obj', '--object_type', default='chair', choices=['chair', 'bed'])
+    parser.add_argument('-obj', '--object_type', default='chair', choices=['chair', 'bed', 'walk'])
     parser.add_argument('-n', '--num', type=int, required=True)
     parser.add_argument('-s', '--save_path', type=str, required=True)
     arg = parser.parse_args()
@@ -203,5 +266,7 @@ if __name__ == "__main__":
         get_chair_info(arg)
     elif arg.object_type == "bed":
         get_bed_info(arg)
+    elif arg.object_type == "walk":
+        get_walk_info(arg)
     else:
         raise ValueError()
