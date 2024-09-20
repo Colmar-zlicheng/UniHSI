@@ -93,10 +93,10 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--num', type=int, default=5)
     parser.add_argument('-an', '--aug_num', type=int, default=10)
     parser.add_argument('-s', '--save_root', type=str, required=True)
-    parser.add_argument('--task', type=str, required=True, choices=['UniHSI_PartNet', 'UniHSI_PartNet_AUG'])
+    parser.add_argument('--task', type=str, required=True, choices=['UniHSI_PartNet', 'UniHSI_PartNet_AUG', 'UniHSI_PartNet_WALK'])
     parser.add_argument('-at', '--aug_type', type=str, default='default', choices=['default', 'random'])
     parser.add_argument('--viz', action='store_true', default=False)
-    parser.add_argument('--actions', default='chair', choices=['chair', 'bed'])
+    parser.add_argument('--actions', default='chair', choices=['chair', 'bed', 'walk'])
     args = parser.parse_args()
 
     with open(args.json, 'r') as f:
@@ -114,7 +114,7 @@ if __name__ == '__main__':
 
         value["obj"]["000"]["count"] = args.num
 
-        if args.task == "UniHSI_PartNet":
+        if args.task == "UniHSI_PartNet" or args.task == "UniHSI_PartNet_WALK":
             run_cmd(args, i, 0, value, key, tmp_path)
         elif args.task == "UniHSI_PartNet_AUG":
             for a in range(args.aug_num):
