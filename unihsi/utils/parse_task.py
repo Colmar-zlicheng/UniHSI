@@ -31,6 +31,7 @@ from env.tasks.unihsi_partnet import UniHSI_PartNet
 from env.tasks.unihsi_partnet_train import UniHSI_PartNet_Train
 from env.tasks.unihsi_partnet_bkp import UniHSI_PartNet_BKP
 from env.tasks.unihsi_partnet_aug import UniHSI_PartNet_AUG
+from env.tasks.unihsi_partnet_walk import UniHSI_PartNet_WALK
 from isaacgym import rlgpu
 from env.tasks.vec_task_wrappers import VecTaskPythonWrapper
 
