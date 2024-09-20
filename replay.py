@@ -208,34 +208,39 @@ object_pose = gymapi.Transform()
 object_pose.p = gymapi.Vec3(0.0, 0.0, 0.5)
 
 # load objects
-object_meta_info = json.load(open(os.path.join(os.path.dirname(args.seq), "meta.json"), "r"))
-partnet_id = os.path.basename(os.path.dirname(args.seq))
-if partnet_id in os.listdir('data/partnet'):
-    obj_file = os.path.join('data/partnet', partnet_id)
+if motion_data_unihsi['object_type'] == 'walk':
+    object_meta_info = json.load(open(os.path.join(os.path.dirname(args.seq), "meta.json"), "r"))
+    obj_file = os.path.join("data/CORE4D_retargeted_data_touchpoint", object_meta_info['seq_id'], "scene_mesh.obj")
+    obj_mesh = o3d.io.read_triangle_mesh(obj_file)
 else:
-    obj_file = os.path.join('data/partnet_add', partnet_id)
-obj_file = os.path.join(obj_file, 'models/model_normalized.obj')
-obj_mesh = o3d.io.read_triangle_mesh(obj_file)  # 用trimesh读则需要区分TriangleMesh和Scene
-for r in object_meta_info["rotate"]:
-    R = obj_mesh.get_rotation_matrix_from_xyz(r)
-    obj_mesh.rotate(R, center=(0, 0, 0))
+    object_meta_info = json.load(open(os.path.join(os.path.dirname(args.seq), "meta.json"), "r"))
+    partnet_id = os.path.basename(os.path.dirname(args.seq))
+    if partnet_id in os.listdir('data/partnet'):
+        obj_file = os.path.join('data/partnet', partnet_id)
+    else:
+        obj_file = os.path.join('data/partnet_add', partnet_id)
+    obj_file = os.path.join(obj_file, 'models/model_normalized.obj')
+    obj_mesh = o3d.io.read_triangle_mesh(obj_file)  # 用trimesh读则需要区分TriangleMesh和Scene
+    for r in object_meta_info["rotate"]:
+        R = obj_mesh.get_rotation_matrix_from_xyz(r)
+        obj_mesh.rotate(R, center=(0, 0, 0))
 
-# rescale
-scale_factors = object_meta_info["scale"]
-if (isinstance(scale_factors, int)) or (isinstance(scale_factors, float)):
-    print("[warning] the scale is a scalar, not a list !!!")
-    scale_factors = [scale_factors, scale_factors, scale_factors]
-T_scale = np.eye(4)
-T_scale[:3, :3] = np.diag(scale_factors)
-T_to_origin = np.eye(4)
-T_to_origin[:3, 3] = -obj_mesh.get_center()
-T_back = -T_to_origin
-T = T_back @ T_scale @ T_to_origin
-obj_mesh.transform(T)
+    # rescale
+    scale_factors = object_meta_info["scale"]
+    if (isinstance(scale_factors, int)) or (isinstance(scale_factors, float)):
+        print("[warning] the scale is a scalar, not a list !!!")
+        scale_factors = [scale_factors, scale_factors, scale_factors]
+    T_scale = np.eye(4)
+    T_scale[:3, :3] = np.diag(scale_factors)
+    T_to_origin = np.eye(4)
+    T_to_origin[:3, 3] = -obj_mesh.get_center()
+    T_back = -T_to_origin
+    T = T_back @ T_scale @ T_to_origin
+    obj_mesh.transform(T)
 
-obj_mesh_v = np.float32(obj_mesh.vertices)
-obj_mesh.translate((0, 0, -obj_mesh_v[:, 2].min()))
-obj_mesh.translate(object_meta_info["transfer"])
+    obj_mesh_v = np.float32(obj_mesh.vertices)
+    obj_mesh.translate((0, 0, -obj_mesh_v[:, 2].min()))
+    obj_mesh.translate(object_meta_info["transfer"])
 
 object_collision_mesh = trimesh.Trimesh(vertices=np.float32(obj_mesh.vertices), faces=np.int32(obj_mesh.triangles))
 object_vertices, object_faces = np.float32(object_collision_mesh.vertices).copy(), np.uint32(
