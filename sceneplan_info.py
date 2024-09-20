@@ -248,6 +248,7 @@ def get_walk_info(args):
         walk_class = Walk(core4s_seqs[i])
         tmp_dict = parse_dict(walk_class)
         tmp_dict['obj']['000']['start_point'] = walk_class.start_point
+        tmp_dict['obj']['000']['seq_id'] = walk_class.seq_id
         save_dict[str(key_id).rjust(4, '0')] = tmp_dict
         key_id += 1
 
