@@ -178,15 +178,21 @@ with open(args.seq, 'rb') as f:
     motion_data_unihsi = pickle.load(f)
 
 walk = motion_data_unihsi['walk']
-sit = motion_data_unihsi['sit']
-humanoid_root_states = np.concatenate([walk['humanoid_root_states'], sit['humanoid_root_states']], axis=0)  # [N, 13]
-dof_states = np.concatenate([walk['dof_states'], sit['dof_states']], axis=0)  # [N, 28, 2]
-rigid_body_states = np.concatenate([walk['rigid_body_states'], sit['rigid_body_states']], axis=0)  # [N, 15, 13]
-if motion_data_unihsi['object_type'] == 'bed':
-    lie = motion_data_unihsi['lie']
-    humanoid_root_states = np.concatenate([humanoid_root_states, lie['humanoid_root_states']], axis=0)
-    dof_states = np.concatenate([dof_states, lie['dof_states']], axis=0)
-    rigid_body_states = np.concatenate([rigid_body_states, lie['rigid_body_states']], axis=0)
+if motion_data_unihsi['object_type'] == 'walk':
+    humanoid_root_states = walk['humanoid_root_states'].numpy()
+    dof_states = walk['dof_states'].numpy()
+    rigid_body_states = walk['rigid_body_states'].numpy()
+else:
+    sit = motion_data_unihsi['sit']
+    humanoid_root_states = np.concatenate([walk['humanoid_root_states'], sit['humanoid_root_states']],
+                                          axis=0)  # [N, 13]
+    dof_states = np.concatenate([walk['dof_states'], sit['dof_states']], axis=0)  # [N, 28, 2]
+    rigid_body_states = np.concatenate([walk['rigid_body_states'], sit['rigid_body_states']], axis=0)  # [N, 15, 13]
+    if motion_data_unihsi['object_type'] == 'bed':
+        lie = motion_data_unihsi['lie']
+        humanoid_root_states = np.concatenate([humanoid_root_states, lie['humanoid_root_states']], axis=0)
+        dof_states = np.concatenate([dof_states, lie['dof_states']], axis=0)
+        rigid_body_states = np.concatenate([rigid_body_states, lie['rigid_body_states']], axis=0)
 
 initial_pose_ori = [0, 0, 0, 1]  # (x, y, z, w)
 
@@ -203,7 +209,7 @@ object_pose.p = gymapi.Vec3(0.0, 0.0, 0.5)
 
 # load objects
 object_meta_info = json.load(open(os.path.join(os.path.dirname(args.seq), "meta.json"), "r"))
-partnet_id = os.path.basename(os.path.dirname(os.path.dirname(args.seq)))
+partnet_id = os.path.basename(os.path.dirname(args.seq))
 if partnet_id in os.listdir('data/partnet'):
     obj_file = os.path.join('data/partnet', partnet_id)
 else:
@@ -252,13 +258,14 @@ for i in range(num_envs):
     envs.append(env)
 
     # add object
-    object_info = object_list[env_object_ids[i]]
-    env_ori = env_origins[i].detach().cpu().numpy()
-    object_info["tm_params"].transform.p.x = object_center_position[i, 0] = env_ori[0] + 0.0
-    object_info["tm_params"].transform.p.y = object_center_position[i, 1] = env_ori[1] + 0.0
-    object_info["tm_params"].transform.p.z = object_center_position[i, 2] = 0.0
-    gym.add_triangle_mesh(sim, object_info["vertices"].flatten(), object_info["faces"].flatten(),
-                          object_info["tm_params"])
+    if not motion_data_unihsi['object_type'] == 'walk':
+        object_info = object_list[env_object_ids[i]]
+        env_ori = env_origins[i].detach().cpu().numpy()
+        object_info["tm_params"].transform.p.x = object_center_position[i, 0] = env_ori[0] + 0.0
+        object_info["tm_params"].transform.p.y = object_center_position[i, 1] = env_ori[1] + 0.0
+        object_info["tm_params"].transform.p.z = object_center_position[i, 2] = 0.0
+        gym.add_triangle_mesh(sim, object_info["vertices"].flatten(), object_info["faces"].flatten(),
+                              object_info["tm_params"])
 
     # add actor
     pose = gymapi.Transform()

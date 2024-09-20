@@ -25,6 +25,24 @@ class UniHSI_PartNet_WALK(UniHSI_PartNet):
             os.mkdir(save_dir)
         return save_dir
 
+    def _create_mesh_ground(self):
+        self.plan_number = len(self.sceneplan)
+        # min_mesh_dict = self._load_mesh()
+        # pcd_list = self._load_pcd(min_mesh_dict)
+
+        # self._get_pcd_parts(pcd_list)
+        self.scene_idx = torch.tensor([[0]]).to(self.device)
+
+        _x = np.arange(0, self.local_scale)
+        _y = np.arange(0, self.local_scale)
+        _xx, _yy = np.meshgrid(_x, _y)
+        x, y = _xx.ravel(), _yy.ravel()
+        mesh_grid = np.stack([x, y, y], axis=-1)  # 3rd dim meaningless
+        self.mesh_pos = torch.from_numpy(mesh_grid).to(self.device) * self.local_interval
+        self.humanoid_in_mesh = torch.tensor(
+            [self.local_interval * (self.local_scale - 1) / 4, self.local_interval * (self.local_scale - 1) / 2,
+             0]).to(self.device)
+
     def _save_in_reset(self, reset, fulfill):
         if reset:
             if len(self.humanoid_root_states_list) > 0:
@@ -71,4 +89,3 @@ class UniHSI_PartNet_WALK(UniHSI_PartNet):
             self.humanoid_root_states_list = []
             self.dof_states_list = []
             self.rigid_body_states_list = []
-
