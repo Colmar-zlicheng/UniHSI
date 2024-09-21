@@ -212,6 +212,7 @@ if motion_data_unihsi['object_type'] == 'walk':
     object_meta_info = json.load(open(os.path.join(os.path.dirname(args.seq), "meta.json"), "r"))
     obj_file = os.path.join("data/CORE4D_retargeted_data_touchpoint", object_meta_info['seq_id'], "scene_mesh.obj")
     obj_mesh = o3d.io.read_triangle_mesh(obj_file)
+
 else:
     object_meta_info = json.load(open(os.path.join(os.path.dirname(args.seq), "meta.json"), "r"))
     partnet_id = os.path.basename(os.path.dirname(args.seq))
@@ -263,14 +264,14 @@ for i in range(num_envs):
     envs.append(env)
 
     # add object
-    if not motion_data_unihsi['object_type'] == 'walk':
-        object_info = object_list[env_object_ids[i]]
-        env_ori = env_origins[i].detach().cpu().numpy()
-        object_info["tm_params"].transform.p.x = object_center_position[i, 0] = env_ori[0] + 0.0
-        object_info["tm_params"].transform.p.y = object_center_position[i, 1] = env_ori[1] + 0.0
-        object_info["tm_params"].transform.p.z = object_center_position[i, 2] = 0.0
-        gym.add_triangle_mesh(sim, object_info["vertices"].flatten(), object_info["faces"].flatten(),
-                              object_info["tm_params"])
+    # if not motion_data_unihsi['object_type'] == 'walk':
+    object_info = object_list[env_object_ids[i]]
+    env_ori = env_origins[i].detach().cpu().numpy()
+    object_info["tm_params"].transform.p.x = object_center_position[i, 0] = env_ori[0] + 0.0
+    object_info["tm_params"].transform.p.y = object_center_position[i, 1] = env_ori[1] + 0.0
+    object_info["tm_params"].transform.p.z = object_center_position[i, 2] = 0.0
+    gym.add_triangle_mesh(sim, object_info["vertices"].flatten(), object_info["faces"].flatten(),
+                          object_info["tm_params"])
 
     # add actor
     pose = gymapi.Transform()

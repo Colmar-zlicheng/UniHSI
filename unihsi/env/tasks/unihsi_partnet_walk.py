@@ -33,10 +33,13 @@ class UniHSI_PartNet_WALK(UniHSI_PartNet):
         self.save_root = self.cfg["env"]["save_root"]
         assert self.save_root is not None
 
-        self.start_point = self.plan_items[0]['obj']['start_point']
+        plan_items = list(self.plan_items.values())
+        assert len(plan_items) == 1
+        self.start_point = plan_items[0]['obj']['000']['start_point']
+        self.seq_id = plan_items[0]['obj']['000']['seq_id']
 
     def get_save_dir(self):
-        save_dir = os.path.join(self.save_root, self.pid)
+        save_dir = os.path.join(self.save_root, self.seq_id)
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
         return save_dir
