@@ -215,7 +215,8 @@ if motion_data_unihsi['object_type'] == 'walk':
 
 else:
     object_meta_info = json.load(open(os.path.join(os.path.dirname(args.seq), "meta.json"), "r"))
-    partnet_id = os.path.basename(os.path.dirname(args.seq))
+    partnet_id = os.path.basename(os.path.dirname(os.path.dirname(args.seq)))
+
     if partnet_id in os.listdir('data/partnet'):
         obj_file = os.path.join('data/partnet', partnet_id)
     else:
