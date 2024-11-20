@@ -13,6 +13,10 @@ import pickle
 from scipy.spatial.transform import Rotation as R
 import open3d as o3d
 
+def get_bbox(pts):
+    x_min, y_min, z_min = list(pts.min(axis=0))
+    x_max, y_max, z_max = list(pts.max(axis=0))
+    return [x_min, y_min, z_min, x_max, y_max, z_max]
 
 def axis_angle_to_quaternion(axis_angle: torch.Tensor) -> torch.Tensor:
     """
@@ -253,6 +257,9 @@ tm_params.nb_triangles = object_faces.shape[0]
 # tm_params.transform.r = gymapi.Quat.from_euler_zyx(np.pi / 2, 0, -np.pi / 2)
 object_list = [{"vertices": object_vertices, "faces": object_faces, "tm_params": tm_params}]
 
+bbox = get_bbox(object_vertices)
+cx, cy = (bbox[0] + bbox[3]) / 2, (bbox[1] + bbox[4]) / 2
+
 env_object_ids = np.random.randint(0, len(object_list), num_envs)
 assert num_envs == 1
 env_origins = torch.zeros(num_envs, 3, device=device, requires_grad=False)
@@ -268,8 +275,8 @@ for i in range(num_envs):
     # if not motion_data_unihsi['object_type'] == 'walk':
     object_info = object_list[env_object_ids[i]]
     env_ori = env_origins[i].detach().cpu().numpy()
-    object_info["tm_params"].transform.p.x = object_center_position[i, 0] = env_ori[0] + 0.0
-    object_info["tm_params"].transform.p.y = object_center_position[i, 1] = env_ori[1] + 0.0
+    object_info["tm_params"].transform.p.x = object_center_position[i, 0] = env_ori[0] - cx
+    object_info["tm_params"].transform.p.y = object_center_position[i, 1] = env_ori[1] - cy
     object_info["tm_params"].transform.p.z = object_center_position[i, 2] = 0.0
     gym.add_triangle_mesh(sim, object_info["vertices"].flatten(), object_info["faces"].flatten(),
                           object_info["tm_params"])
@@ -307,6 +314,8 @@ for i in tqdm(range(humanoid_root_states.shape[0])):
     actor_root_state = gym.acquire_actor_root_state_tensor(sim)
     root_states = gymtorch.wrap_tensor(actor_root_state)
     root_states = torch.from_numpy(humanoid_root_states[i]).unsqueeze(0)
+    root_states[:,0] -= cx
+    root_states[:,1] -= cy
     root_reset_actors_indices = torch.tensor([gym.get_actor_index(envs[0], actor_handles[0],
                                                                   gymapi.DOMAIN_SIM)]).to(dtype=torch.int32)
     gym.set_actor_root_state_tensor_indexed(sim, gymtorch.unwrap_tensor(root_states),
