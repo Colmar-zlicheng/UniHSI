@@ -89,6 +89,17 @@ custom_parameters = [
         "default": "data/UniHSI_retargeted_data/1284/amp_kinematic_motions/1284_demo_motion_0.npz",
         "help": "Number of environments to create"
     },
+        {
+        "name": "--save",
+        "action": "store_true",
+        "help": "save video"
+    },
+    {
+        "name": "--save_path",
+        "type": str,
+        "default": "tmp/viz_retarget.mp4",
+        "help": "save path"
+    },
 ]
 args = gymutil.parse_arguments(
     description="test",
@@ -126,9 +137,9 @@ sim = gym.create_sim(args.compute_device_id, args.graphics_device_id, args.physi
 if sim is None:
     raise Exception("Failed to create sim")
 
-show = True
-save = True
-save_fps = 10
+show = True if not args.save else False
+# save = True
+save_fps = 20
 if show:
     viewer = gym.create_viewer(sim, gymapi.CameraProperties())
     if viewer is None:
@@ -300,6 +311,20 @@ if show:
     # front view
     gym.viewer_camera_look_at(viewer, envs[0], cam_pos, cam_target)
 
+if args.save:
+    camera_props = gymapi.CameraProperties()
+    camera_props.enable_tensors = True
+    camera_props.width = 1920
+    camera_props.height = 1080
+
+    camera_handle = gym.create_camera_sensor(envs[0], camera_props)
+    camera_transform = gymapi.Transform()
+    camera_transform.p = gymapi.Vec3(0, -3, 2.0)
+    camera_transform.r = gymapi.Quat.from_euler_zyx(0.0, np.radians(30), np.radians(90))
+    gym.set_camera_transform(camera_handle, envs[0], camera_transform)
+
+    images = []
+
 # humanoid_root_states # [N, 13]
 # dof_states # [N, 28, 2]
 # rigid_body_states  # [N, 15, 13]
@@ -329,6 +354,17 @@ for i in tqdm(range(humanoid_root_states.shape[0])):
         gym.step_graphics(sim)
         gym.draw_viewer(viewer, sim, True)
         gym.clear_lines(viewer)
+
+    if args.save:
+        if not show:
+            gym.step_graphics(sim)
+        gym.render_all_camera_sensors(sim)
+        gym.start_access_image_tensors(sim)
+        camera_rgba_tensor = gym.get_camera_image_gpu_tensor(sim, envs[0], camera_handle, gymapi.IMAGE_COLOR)
+        torch_camera_rgba_tensor = gymtorch.wrap_tensor(camera_rgba_tensor)
+        images.append(torch_camera_rgba_tensor.clone())
+        gym.end_access_image_tensors(sim)
+
     gym.sync_frame_time(sim)
 
     if show and gym.query_viewer_has_closed(viewer):
@@ -337,3 +373,11 @@ for i in tqdm(range(humanoid_root_states.shape[0])):
 if show:
     gym.destroy_viewer(viewer)
 gym.destroy_sim(sim)
+
+if args.save:
+    import torchvision
+
+    frames = torch.stack(images).detach().cpu()
+    if not os.path.exists(os.path.dirname(args.save_path)):
+        os.makedirs(os.path.dirname(args.save_path))
+    torchvision.io.write_video(args.save_path, frames[..., :3], fps=save_fps, video_codec="libx264")
